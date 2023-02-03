@@ -47,7 +47,7 @@ struct HfCandidateCreatorCascade {
   Produces<aod::HfCandCascBase> rowCandidateBase;
 
   // vertexing
-  //Configurable<double> bz{"bz", 5., "magnetic field"};
+  // Configurable<double> bz{"bz", 5., "magnetic field"};
   Configurable<bool> propagateToPCA{"propagateToPCA", true, "create tracks version propagated to PCA"};
   Configurable<double> maxR{"maxR", 200., "reject PCA's above this radius"};
   Configurable<double> maxDZIni{"maxDZIni", 4., "reject (if>0) PCA candidate if tracks DZ exceeds threshold"};
@@ -68,7 +68,6 @@ struct HfCandidateCreatorCascade {
   o2::base::MatLayerCylSet* lut;
   o2::base::Propagator::MatCorrType matCorr = o2::base::Propagator::MatCorrType::USEMatCorrLUT;
   int runNumber;
-
 
   // for debugging
 #ifdef MY_DEBUG
@@ -114,7 +113,7 @@ struct HfCandidateCreatorCascade {
   {
     // 2-prong vertex fitter
     o2::vertexing::DCAFitterN<2> df;
-    //df.setBz(bz);
+    // df.setBz(bz);
     df.setPropagateToPCA(propagateToPCA);
     df.setMaxR(maxR);
     df.setMaxDZIni(maxDZIni);
