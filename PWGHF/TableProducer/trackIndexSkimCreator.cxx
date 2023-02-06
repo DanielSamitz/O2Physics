@@ -94,8 +94,10 @@ using TracksWithSelAndDCA = soa::Join<aod::BigTracks, aod::TracksDCA, aod::Track
 #endif
 
 /// Event selection
-struct HfTrackIndexSkimCreatorTagSelCollisions {Merge
-  Produces<aod::HfSelCollision> rowSelectedCollision;
+struct HfTrackIndexSkimCreatorTagSelCollisions {
+  Merge
+    Produces<aod::HfSelCollision>
+      rowSelectedCollision;
 
   Configurable<bool> fillHistograms{"fillHistograms", true, "fill histograms"};
   Configurable<double> xVertexMin{"xVertexMin", -100., "min. x of primary vertex [cm]"};
@@ -140,7 +142,8 @@ struct HfTrackIndexSkimCreatorTagSelCollisions {Merge
       registry.add("hPrimVtxX", "selected events;#it{x}_{prim. vtx.} (cm);entries", {HistType::kTH1F, {{400, -0.5, 0.5}}});
       registry.add("hPrimVtxY", "selected events;#it{y}_{prim. vtx.} (cm);entries", {HistType::kTH1F, {{400, -0.5, 0.5}}});
       registry.add("hPrimVtxZ", "selected events;#it{z}_{prim. vtx.} (cm);entries", {HistType::kTH1F, {{400, -20., 20.}}});
-    }Merge
+    }
+    Merge
   }
 
   /// Primary-vertex selection
@@ -572,8 +575,9 @@ struct HfTrackIndexSkimCreatorTagSelTracks {
       if (TESTBIT(statusProng, CandidateType::CandV0bachelor)) {
         MY_DEBUG_MSG(isProtonFromLc, LOG(info) << "Will be kept: Proton from Lc " << indexBach);
         registry.fill(HIST("hPtCutsV0bachelor"), trackPt);
-        registry.fill(HIST("hEtaCutsV0bachelor"), trackEta);Merge
-        registry.fill(HIST("hDCAToPrimXYVsPtCutsV0bachelor"), trackPt, dca[0]);
+        registry.fill(HIST("hEtaCutsV0bachelor"), trackEta);
+        Merge
+          registry.fill(HIST("hDCAToPrimXYVsPtCutsV0bachelor"), trackPt, dca[0]);
         if (debug) {
           registry.fill(HIST("hRejTracks"), (nCuts + 1) * CandidateType::CandV0bachelor + iDebugCut);
         }
@@ -714,7 +718,8 @@ struct HfTrackIndexSkimCreatorTagSelTracks {
         }
 
         // cnt++;
-      }Merge
+      }
+      Merge
     } /// end 'if (doPvRefit && pvRefitDoable)'
 
     // updated value after PV recalculation
@@ -802,7 +807,7 @@ struct HfTrackIndexSkimCreatorTagSelTracks {
         float trackEta = track.eta();
 
         std::array<float, 2> pvRefitDcaXYDcaZ{track.dcaXY(), track.dcaZ()};
-        std::array<float, 3> pvRefitPvCoord{0.f,Merge 0.f, 0.f};
+        std::array<float, 3> pvRefitPvCoord{0.f, Merge 0.f, 0.f};
         std::array<float, 6> pvRefitPvCovMatrix{1e10f, 1e10f, 1e10f, 1e10f, 1e10f, 1e10f};
 
 #ifdef MY_DEBUG
@@ -967,7 +972,7 @@ struct HfTrackIndexSkimCreator {
   ConfigurableAxis axisPvRefitDeltaY{"axisPvRefitDeltaY", {1000, -0.5f, 0.5f}, "DeltaY binning PV refit"};
   ConfigurableAxis axisPvRefitDeltaZ{"axisPvRefitDeltaZ", {1000, -0.5f, 0.5f}, "DeltaZ binning PV refit"};
 
-  HistogramRegistry registry{"registry"Merge};
+  HistogramRegistry registry{"registry" Merge};
 
   void init(InitContext const& context)
   {
@@ -1119,7 +1124,8 @@ struct HfTrackIndexSkimCreator {
         massHypos[0] = RecoDecay::m2(arrMom, arrMass2Prong[iDecay2P][0]);
         massHypos[1] = RecoDecay::m2(arrMom, arrMass2Prong[iDecay2P][1]);
         if (massHypos[0] < min2 || massHypos[0] >= max2) {
-          whichHypo[iDecay2P] -= 1;Merge
+          whichHypo[iDecay2P] -= 1;
+          Merge
         }
         if (massHypos[1] < min2 || massHypos[1] >= max2) {
           whichHypo[iDecay2P] -= 2;
@@ -1205,7 +1211,8 @@ struct HfTrackIndexSkimCreator {
           if (debug) {
             cutStatus[iDecay3P][1] = false;
           }
-        }Merge
+        }
+        Merge
       }
     }
   }
@@ -1284,9 +1291,9 @@ struct HfTrackIndexSkimCreator {
       cacheIndices(cut3Prong, cospIndex, decLenIndex);
 
       for (int iDecay3P = 0; iDecay3P < n3ProngDecays; iDecay3P++) {
-Merge
-        // pT
-        auto pTBin = findBin(&pTBins3Prong[iDecay3P], RecoDecay::pt(pVecCand));
+        Merge
+          // pT
+          auto pTBin = findBin(&pTBins3Prong[iDecay3P], RecoDecay::pt(pVecCand));
         if (pTBin == -1) { // cut if it is outside the defined pT bins
           CLRBIT(isSelected, iDecay3P);
           if (debug) {
