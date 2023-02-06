@@ -1464,8 +1464,7 @@ struct HfTrackIndexSkimCreator {
   using FilteredHfTrackAssocSel = soa::Filtered<soa::Join<aod::HfTrackAssoc, aod::HfSelTrack>>;
   Preslice<FilteredHfTrackAssocSel> trackIndicesPerCollision = aod::hf_track_association::collisionId;
 
-  void processNoSkimCreator(SelectedCollisions const&)
-  {
+  void processNoSkimCreator(SelectedCollisions const&){
     // dummy
   };
   PROCESS_SWITCH(HfTrackIndexSkimCreator, processNoSkimCreator, "Do not process 2-prongs and 3-prongs", false);
@@ -2235,7 +2234,6 @@ struct HfTrackIndexSkimCreator {
     }
   }
   PROCESS_SWITCH(HfTrackIndexSkimCreator, process2And3Prongs, "Process 2-prong and 3-prong skim", true);
-
 };
 
 //________________________________________________________________________________________________________________________
