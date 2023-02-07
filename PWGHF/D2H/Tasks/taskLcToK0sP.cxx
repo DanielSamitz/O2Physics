@@ -33,7 +33,7 @@ struct HfTaskLcToK0sP {
   Configurable<int> selectionFlagLcToK0sP{"selectionFlagLcToK0sP", 1, "Selection Flag for Lc"};
   Configurable<int> selectionFlagLcbarToK0sP{"selectionFlagLcbarToK0sP", 1, "Selection Flag for Lcbar"};
   Configurable<double> etaCandMax{"etaCandMax", -1., "max. cand. pseudorapidity"};
-  Configurable<std::vector<double>> binsPt{"binsPt",std::vector<double>{hf_cuts_lc_to_k0s_p::vecBinsPt}, "pT bin limits"};
+  Configurable<std::vector<double>> binsPt{"binsPt", std::vector<double>{hf_cuts_lc_to_k0s_p::vecBinsPt}, "pT bin limits"};
 
   Filter filterSelectCandidates = (aod::hf_sel_candidate_lc_to_k0s_p::isSelLcToK0sP >= selectionFlagLcToK0sP || aod::hf_sel_candidate_lc_to_k0s_p::isSelLcToK0sP >= selectionFlagLcbarToK0sP);
 
@@ -48,7 +48,7 @@ struct HfTaskLcToK0sP {
      {"hd0V0pos", "cascade candidates;pos daugh v0 DCAxy to prim. vertex (cm);p_{T}", {HistType::kTH2F, {{1000, -5.0f, 5.0f}, {binsPt, "#it{p}_{T} (GeV/#it{c})"}}}},
      {"hd0V0neg", "cascade candidates;neg daugh v0 DCAxy to prim. vertex (cm);p_{T}", {HistType::kTH2F, {{1000, -5.0f, 5.0f}, {binsPt, "#it{p}_{T} (GeV/#it{c})"}}}},
      {"hV0CPA", "cascade candidates;v0 cosine of pointing angle;p_{T}", {HistType::kTH2F, {{500, 0.98f, 1.0001f}, {binsPt, "#it{p}_{T} (GeV/#it{c})"}}}},
-     {"hEta", "cascade candidates;candidate #it{#eta};p_{T}", {HistType::kTH2F, {{500, -2.0f, 2.0f},{binsPt,"#it{p}_{T} (GeV/#it{c})"}}}},
+     {"hEta", "cascade candidates;candidate #it{#eta};p_{T}", {HistType::kTH2F, {{500, -2.0f, 2.0f}, {binsPt, "#it{p}_{T} (GeV/#it{c})"}}}},
      {"hSelectionStatus", "cascade candidates;selection status;p_{T}", {HistType::kTH1F, {{5, -0.5f, 4.5f}}}}}};
 
   void init(InitContext& context)
@@ -115,7 +115,7 @@ struct HfTaskLcToK0sP {
         auto indexMother = RecoDecay::getMother(particlesMC, candidate.prong0_as<aod::BigTracksMC>().mcParticle_as<soa::Join<aod::McParticles, aod::HfCandCascadeMcGen>>(), pdg::Code::kLambdaCPlus, true);
         auto particleMother = particlesMC.rawIteratorAt(indexMother);
         registry.fill(HIST("hPtGenSig"), particleMother.pt()); // gen. level pT
-        registry.fill(HIST("hPtRecSig"), candPt);      // rec. level pT
+        registry.fill(HIST("hPtRecSig"), candPt);              // rec. level pT
         registry.fill(HIST("hCPARecSig"), candidate.cpa(), candPt);
         registry.fill(HIST("hV0CPARecSig"), candidate.v0cosPA(), candPt);
         registry.fill(HIST("hEtaRecSig"), candidate.eta(), candPt);
