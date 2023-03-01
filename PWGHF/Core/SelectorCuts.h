@@ -318,7 +318,7 @@ static const std::vector<std::string> labelsCutVar = {"m", "pT p", "pT K", "pT P
 namespace hf_cuts_lc_to_k0s_p
 {
 static constexpr int nBinsPt = 8;
-static constexpr int nCutVars = 8;
+static constexpr int nCutVars = 10;
 // default values for the pT bin edges (can be used to configure histogram axis)
 // offset by 1 from the bin numbers in cuts array
 constexpr double binsPt[nBinsPt + 1] = {
@@ -334,15 +334,15 @@ constexpr double binsPt[nBinsPt + 1] = {
 auto vecBinsPt = std::vector<double>{binsPt, binsPt + nBinsPt + 1};
 
 // default values for the cuts
-// mK0s(GeV)     mLambdas(GeV)    mGammas(GeV)    ptp     ptK0sdau     ptK0s     d0p     d0K0
-constexpr double cuts[nBinsPt][nCutVars] = {{0.008, 0.005, 0.1, 0.5, 0.3, 0.6, 0.05, 999999.},  // 1 < pt < 2
-                                            {0.008, 0.005, 0.1, 0.5, 0.4, 1.3, 0.05, 999999.},  // 2 < pt < 3
-                                            {0.009, 0.005, 0.1, 0.6, 0.4, 1.3, 0.05, 999999.},  // 3 < pt < 4
-                                            {0.011, 0.005, 0.1, 0.6, 0.4, 1.4, 0.05, 999999.},  // 4 < pt < 5
-                                            {0.013, 0.005, 0.1, 0.6, 0.4, 1.4, 0.06, 999999.},  // 5 < pt < 6
-                                            {0.013, 0.005, 0.1, 0.9, 0.4, 1.6, 0.09, 999999.},  // 6 < pt < 8
-                                            {0.016, 0.005, 0.1, 0.9, 0.4, 1.7, 0.10, 999999.},  // 8 < pt < 12
-                                            {0.019, 0.005, 0.1, 1.0, 0.4, 1.9, 0.20, 999999.}}; // 12 < pt < 24
+// mK0s(GeV)     mLambdas(GeV)    mGammas(GeV)    ptp     ptK0sdau     ptK0s     d0p  d0K0 decLengthMin decLengthMax
+constexpr double cuts[nBinsPt][nCutVars] = {{0.008, 0.005, 0.1, 0.5, 0.3, 0.6, 0.05, 999999., 0.0, 9999999.},  // 1 < pt < 2
+                                            {0.008, 0.005, 0.1, 0.5, 0.4, 1.3, 0.05, 999999., 0.0, 9999999.},  // 2 < pt < 3
+                                            {0.009, 0.005, 0.1, 0.6, 0.4, 1.3, 0.05, 999999., 0.0, 9999999.},  // 3 < pt < 4
+                                            {0.011, 0.005, 0.1, 0.6, 0.4, 1.4, 0.05, 999999., 0.0, 9999999.},  // 4 < pt < 5
+                                            {0.013, 0.005, 0.1, 0.6, 0.4, 1.4, 0.06, 999999., 0.0, 9999999.},  // 5 < pt < 6
+                                            {0.013, 0.005, 0.1, 0.9, 0.4, 1.6, 0.09, 999999., 0.0, 9999999.},  // 6 < pt < 8
+                                            {0.016, 0.005, 0.1, 0.9, 0.4, 1.7, 0.10, 999999., 0.0, 9999999.},  // 8 < pt < 12
+                                            {0.019, 0.005, 0.1, 1.0, 0.4, 1.9, 0.20, 999999., 0.0, 9999999.}}; // 12 < pt < 24
 
 // row labels
 static const std::vector<std::string> labelsPt = {
@@ -356,7 +356,7 @@ static const std::vector<std::string> labelsPt = {
   "pT bin 7"};
 
 // column labels
-static const std::vector<std::string> labelsCutVar = {"mK0s", "mLambda", "mGamma", "ptBach", "ptV0Dau", "ptV0", "d0Bach", "d0V0"};
+static const std::vector<std::string> labelsCutVar = {"mK0s", "mLambda", "mGamma", "ptBach", "ptV0Dau", "ptV0", "d0Bach", "d0V0", "decLengthMin", "decLengthMax"};
 } // namespace hf_cuts_lc_to_k0s_p
 
 namespace hf_cuts_dplus_to_pi_k_pi

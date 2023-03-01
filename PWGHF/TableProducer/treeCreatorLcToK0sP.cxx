@@ -17,151 +17,15 @@
 ///
 /// \author Daniel Samitz <daniel.samitz@cern.ch>
 
-#include "Common/Core/trackUtilities.h"
+//#include "Common/Core/trackUtilities.h"
 #include "Framework/AnalysisTask.h"
 #include "Framework/runDataProcessing.h"
-#include "ReconstructionDataFormats/DCA.h"
+//#include "ReconstructionDataFormats/DCA.h"
 #include "PWGHF/DataModel/CandidateReconstructionTables.h"
 #include "PWGHF/DataModel/CandidateSelectionTables.h"
 
 using namespace o2;
 using namespace o2::framework;
-
-namespace o2::aod
-{
-namespace full
-{
-DECLARE_SOA_COLUMN(RSecondaryVertex, rSecondaryVertex, float);
-DECLARE_SOA_COLUMN(PtProng0, ptProng0, float);
-DECLARE_SOA_COLUMN(PProng0, pProng0, float);
-DECLARE_SOA_COLUMN(ImpactParameterNormalised0, impactParameterNormalised0, float);
-DECLARE_SOA_COLUMN(ImpactParameterXY0, impactParameterXY0, float);
-DECLARE_SOA_COLUMN(PtProng1, ptProng1, float);
-DECLARE_SOA_COLUMN(PProng1, pProng1, float);
-DECLARE_SOA_COLUMN(ImpactParameterNormalised1, impactParameterNormalised1, float);
-DECLARE_SOA_COLUMN(ImpactParameterXY1, impactParameterXY1, float);
-DECLARE_SOA_COLUMN(CandidateSelFlag, candidateSelFlag, int8_t);
-DECLARE_SOA_COLUMN(M, m, float);
-DECLARE_SOA_COLUMN(Pt, pt, float);
-DECLARE_SOA_COLUMN(P, p, float);
-DECLARE_SOA_COLUMN(Eta, eta, float);
-DECLARE_SOA_COLUMN(Phi, phi, float);
-DECLARE_SOA_COLUMN(Y, y, float);
-DECLARE_SOA_COLUMN(E, e, float);
-DECLARE_SOA_COLUMN(NSigmaTPCPr0, nSigmaTPCPr0, float);
-DECLARE_SOA_COLUMN(NSigmaTOFPr0, nSigmaTOFPr0, float);
-DECLARE_SOA_COLUMN(DecayLength, decayLength, float);
-DECLARE_SOA_COLUMN(DecayLengthXY, decayLengthXY, float);
-DECLARE_SOA_COLUMN(DecayLengthNormalised, decayLengthNormalised, float);
-DECLARE_SOA_COLUMN(DecayLengthXYNormalised, decayLengthXYNormalised, float);
-DECLARE_SOA_COLUMN(CPA, cpa, float);
-DECLARE_SOA_COLUMN(CPAXY, cpaXY, float);
-DECLARE_SOA_COLUMN(Ct, ct, float);
-DECLARE_SOA_COLUMN(PtV0Pos, ptV0Pos, float);
-DECLARE_SOA_COLUMN(PtV0Neg, ptV0Neg, float);
-DECLARE_SOA_COLUMN(V0Radius, v0Radius, float);
-DECLARE_SOA_COLUMN(V0CosPA, v0CosPA, float);
-DECLARE_SOA_COLUMN(V0MLambda, v0MLambda, float);
-DECLARE_SOA_COLUMN(V0MAntiLambda, v0MAntiLambda, float);
-DECLARE_SOA_COLUMN(V0MK0Short, v0MK0Short, float);
-DECLARE_SOA_COLUMN(V0MGamma, v0MGamma, float);
-DECLARE_SOA_COLUMN(V0CtK0Short, v0CtK0Short, float);
-DECLARE_SOA_COLUMN(V0CtLambda, v0CtLambda, float);
-DECLARE_SOA_COLUMN(FlagMc, flagMc, int8_t);
-DECLARE_SOA_COLUMN(OriginMcRec, originMcRec, int8_t);
-DECLARE_SOA_COLUMN(OriginMcGen, originMcGen, int8_t);
-// Events
-DECLARE_SOA_COLUMN(IsEventReject, isEventReject, int);
-DECLARE_SOA_COLUMN(RunNumber, runNumber, int);
-} // namespace full
-
-DECLARE_SOA_TABLE(HfCandCascFull, "AOD", "HFCANDCASCFull",
-                  collision::BCId,
-                  collision::NumContrib,
-                  collision::PosX,
-                  collision::PosY,
-                  collision::PosZ,
-                  hf_cand::XSecondaryVertex,
-                  hf_cand::YSecondaryVertex,
-                  hf_cand::ZSecondaryVertex,
-                  hf_cand::ErrorDecayLength,
-                  hf_cand::ErrorDecayLengthXY,
-                  hf_cand::Chi2PCA,
-                  full::RSecondaryVertex,
-                  full::DecayLength,
-                  full::DecayLengthXY,
-                  full::DecayLengthNormalised,
-                  full::DecayLengthXYNormalised,
-                  full::ImpactParameterNormalised0,
-                  full::PtProng0,
-                  full::PProng0,
-                  full::ImpactParameterNormalised1,
-                  full::PtProng1,
-                  full::PProng1,
-                  hf_cand::PxProng0,
-                  hf_cand::PyProng0,
-                  hf_cand::PzProng0,
-                  hf_cand::PxProng1,
-                  hf_cand::PyProng1,
-                  hf_cand::PzProng1,
-                  hf_cand::ImpactParameter0,
-                  hf_cand::ImpactParameter1,
-                  hf_cand::ErrorImpactParameter0,
-                  hf_cand::ErrorImpactParameter1,
-                  hf_cand_casc::V0X,
-                  hf_cand_casc::V0Y,
-                  hf_cand_casc::V0Z,
-                  full::V0Radius,
-                  full::V0CosPA,
-                  full::V0MLambda,
-                  full::V0MAntiLambda,
-                  full::V0MK0Short,
-                  full::V0MGamma,
-                  full::V0CtK0Short,
-                  full::V0CtLambda,
-                  v0data::DCAV0Daughters,
-                  v0data::PxPos,
-                  v0data::PyPos,
-                  v0data::PzPos,
-                  full::PtV0Pos,
-                  v0data::DCAPosToPV,
-                  v0data::PxNeg,
-                  v0data::PyNeg,
-                  v0data::PzNeg,
-                  full::PtV0Neg,
-                  v0data::DCANegToPV,
-                  full::NSigmaTPCPr0,
-                  full::NSigmaTOFPr0,
-                  full::M,
-                  full::Pt,
-                  full::P,
-                  full::CPA,
-                  full::CPAXY,
-                  full::Ct,
-                  full::Eta,
-                  full::Phi,
-                  full::Y,
-                  full::E,
-                  full::FlagMc,
-                  full::OriginMcRec);
-
-DECLARE_SOA_TABLE(HfCandCascFullEvents, "AOD", "HFCANDCASCFullE",
-                  collision::BCId,
-                  collision::NumContrib,
-                  collision::PosX,
-                  collision::PosY,
-                  collision::PosZ);
-
-DECLARE_SOA_TABLE(HfCandCascFullParticles, "AOD", "HFCANDCASCFullP",
-                  collision::BCId,
-                  full::Pt,
-                  full::Eta,
-                  full::Phi,
-                  full::Y,
-                  full::FlagMc,
-                  full::OriginMcGen);
-
-} // namespace o2::aod
 
 /// Writes the full information in an output TTree
 struct HfTreeCreatorLcToK0sP {
