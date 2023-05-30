@@ -180,7 +180,7 @@ DECLARE_SOA_TABLE(HfSelJpsi, "AOD", "HFSELJPSI", //!
 
 namespace hf_sel_candidate_lc_to_k0s_p
 {
-DECLARE_SOA_COLUMN(IsSelLcToK0sP, isSelLcToK0sP, int);
+DECLARE_SOA_COLUMN(IsSelLcToK0sP, isSelLcToK0sP, uint32_t);
 } // namespace hf_sel_candidate_lc_to_k0s_p
 DECLARE_SOA_TABLE(HfSelLcToK0sP, "AOD", "HFSELLCK0SP", //!
                   hf_sel_candidate_lc_to_k0s_p::IsSelLcToK0sP);

@@ -84,8 +84,8 @@ struct HfTreeCreatorLcToK0sP {
       candidate.mAntiLambda(),
       candidate.mK0Short(),
       candidate.mGamma(),
-      o2::aod::hf_cand_casc::ctV0K0s(candidate),
-      o2::aod::hf_cand_casc::ctV0Lambda(candidate),
+      //o2::aod::hf_cand_casc::ctV0K0s(candidate),
+      //o2::aod::hf_cand_casc::ctV0Lambda(candidate),
       candidate.dcaV0daughters(),
       candidate.pxpos(),
       candidate.pypos(),
@@ -109,8 +109,8 @@ struct HfTreeCreatorLcToK0sP {
       candidate.phi(),
       o2::aod::hf_cand_3prong::yLc(candidate),
       o2::aod::hf_cand_3prong::eLc(candidate),
-      flagMc,
-      originMcRec);
+      flagMc);
+      //originMcRec);
   }
 
   template <typename T>
@@ -143,7 +143,7 @@ struct HfTreeCreatorLcToK0sP {
       auto bach = candidate.prong0_as<aod::BigTracksPID>(); // bachelor
       double pseudoRndm = bach.pt() * 1000. - (int16_t)(bach.pt() * 1000);
       if (candidate.isSelLcToK0sP() >= 1 && pseudoRndm < downSampleBkgFactor) {
-        fillCandidate(candidate, bach, candidate.flagMcMatchRec(), candidate.originMcRec());
+        fillCandidate(candidate, bach, candidate.flagMcMatchRec(),0);//, candidate.originMcRec());
       }
     }
 
@@ -158,8 +158,8 @@ struct HfTreeCreatorLcToK0sP {
           particle.phi(),
           RecoDecay::y(array{particle.px(), particle.py(), particle.pz()},
                        RecoDecay::getMassPDG(particle.pdgCode())),
-          particle.flagMcMatchGen(),
-          particle.originMcGen());
+          particle.flagMcMatchGen());
+          //particle.originMcGen());
       }
     }
   }

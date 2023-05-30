@@ -2021,7 +2021,11 @@ DECLARE_SOA_COLUMN(V0MLambda, v0MLambda, float);
 DECLARE_SOA_COLUMN(V0MAntiLambda, v0MAntiLambda, float);
 DECLARE_SOA_COLUMN(V0MK0Short, v0MK0Short, float);
 DECLARE_SOA_COLUMN(V0MGamma, v0MGamma, float);
+DECLARE_SOA_COLUMN(V0CtK0Short, v0CtK0Short, float);
+DECLARE_SOA_COLUMN(V0CtLambda, v0CtLambda, float);
 DECLARE_SOA_COLUMN(FlagMc, flagMc, int8_t);
+DECLARE_SOA_COLUMN(OriginMcRec, originMcRec, int8_t);
+DECLARE_SOA_COLUMN(OriginMcGen, originMcGen, int8_t);
 // Events
 DECLARE_SOA_COLUMN(IsEventReject, isEventReject, int);
 DECLARE_SOA_COLUMN(RunNumber, runNumber, int);
@@ -2069,6 +2073,8 @@ DECLARE_SOA_TABLE(HfCandCascFull, "AOD", "HFCANDCASCFull",
                   casc_full::V0MAntiLambda,
                   casc_full::V0MK0Short,
                   casc_full::V0MGamma,
+                  //casc_full::V0CtK0Short,
+                  //casc_full::V0CtLambda,
                   v0data::DCAV0Daughters,
                   v0data::PxPos,
                   v0data::PyPos,
@@ -2093,6 +2099,7 @@ DECLARE_SOA_TABLE(HfCandCascFull, "AOD", "HFCANDCASCFull",
                   casc_full::Y,
                   casc_full::E,
                   casc_full::FlagMc);
+                  //casc_full::OriginMcRec);
 
 DECLARE_SOA_TABLE(HfCandCascFullEvents, "AOD", "HFCANDCASCFullE",
                   collision::BCId,
@@ -2108,6 +2115,7 @@ DECLARE_SOA_TABLE(HfCandCascFullParticles, "AOD", "HFCANDCASCFullP",
                   casc_full::Phi,
                   casc_full::Y,
                   casc_full::FlagMc);
+                  //casc_full::OriginMcGen);
 
 } // namespace o2::aod
 

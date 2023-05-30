@@ -99,16 +99,16 @@ struct HfCandidateSelectorLcToK0sPTree {
     labels[2 + CandidateRejection::decLengthMin] = "rej. decLengthMin";
     labels[2 + CandidateRejection::decLengthMax] = "rej. decLengthMax";
     AxisSpec axisCandidates = {nBinsCandidates, 0, nBinsCandidates, ""};
-    registry.add("hCandidates", "Candidates;;entries", HistType::kTH1F, {axisCandidates});
+    registry.add("hCandidates", "Candidates;;entries", HistType::kTH1I, {axisCandidates});
     for (int iBin = 0; iBin < nBinsCandidates; iBin++) {
       registry.get<TH1>(HIST("hCandidates"))->GetXaxis()->SetBinLabel(iBin + 1, labels[iBin].data());
     }
     if (doMc){
-      registry.add("hCandidatesSig", "CandidatesSig;;entries", HistType::kTH1F, {axisCandidates});
+      registry.add("hCandidatesSig", "CandidatesSig;;entries", HistType::kTH1I, {axisCandidates});
       for (int iBin = 0; iBin < nBinsCandidates; iBin++) {
         registry.get<TH1>(HIST("hCandidatesSig"))->GetXaxis()->SetBinLabel(iBin + 1, labels[iBin].data());
       }
-      registry.add("hCandidatesBg", "CandidatesBg;;entries", HistType::kTH1F, {axisCandidates});
+      registry.add("hCandidatesBg", "CandidatesBg;;entries", HistType::kTH1I, {axisCandidates});
       for (int iBin = 0; iBin < nBinsCandidates; iBin++) {
         registry.get<TH1>(HIST("hCandidatesBg"))->GetXaxis()->SetBinLabel(iBin + 1, labels[iBin].data());
       }
@@ -118,62 +118,62 @@ struct HfCandidateSelectorLcToK0sPTree {
 
 
   template <typename T>
-  void selection(const T& hfCandCascade, int &status)
+  void selection(const T& hfCandCascade, uint32_t &status)
   {
     auto candPt = hfCandCascade.pt();
     int ptBin = findBin(binsPt, candPt);
     if (ptBin == -1) {
-       SETBIT(status, 1 + CandidateRejection::ptCand);
+       SETBIT(status, CandidateRejection::ptCand);
        return;
     }
 
 
     if (std::abs(hfCandCascade.v0MK0Short() - RecoDecay::getMassPDG(kK0Short)) > cuts->get(ptBin, "mK0s")) {
-      SETBIT(status, 1 + CandidateRejection::mK0s);
+      SETBIT(status, CandidateRejection::mK0s);
     }
 
     if ((std::abs(hfCandCascade.v0MLambda() - RecoDecay::getMassPDG(kLambda0)) < cuts->get(ptBin, "mLambda")) || (std::abs(hfCandCascade.v0MAntiLambda() - RecoDecay::getMassPDG(kLambda0)) < cuts->get(ptBin, "mLambda"))) {
-      SETBIT(status, 1 + CandidateRejection::mLambda);
+      SETBIT(status, CandidateRejection::mLambda);
     }
 
     if (std::abs(hfCandCascade.v0MGamma() - RecoDecay::getMassPDG(kGamma)) < cuts->get(ptBin, "mGamma")) {
-      SETBIT(status, 1 + CandidateRejection::mGamma);
+      SETBIT(status, CandidateRejection::mGamma);
     }
 
     if (hfCandCascade.ptProng0() < cuts->get(ptBin, "ptBach")) {
-      SETBIT(status, 1 + CandidateRejection::ptBach);
+      SETBIT(status, CandidateRejection::ptBach);
     }
 
     if ((hfCandCascade.ptV0Pos() < cuts->get(ptBin, "ptV0Dau")) || (hfCandCascade.ptV0Neg() < cuts->get(ptBin, "ptV0Dau"))) {
-      SETBIT(status, 1 + CandidateRejection::ptV0Dau);
+      SETBIT(status, CandidateRejection::ptV0Dau);
     }
 
     if (hfCandCascade.ptProng1() < cuts->get(ptBin, "ptV0")) {
-      SETBIT(status, 1 + CandidateRejection::ptV0);
+      SETBIT(status, CandidateRejection::ptV0);
     }
 
     if (std::abs(hfCandCascade.impactParameter0()) > cuts->get(ptBin, "d0Bach")) {
-      SETBIT(status, 1 + CandidateRejection::d0Bach);
+      SETBIT(status, CandidateRejection::d0Bach);
     }
 
     if (std::abs(hfCandCascade.impactParameter1()) > cuts->get(ptBin, "d0V0")) {
-      SETBIT(status, 1 + CandidateRejection::d0V0);
+      SETBIT(status, CandidateRejection::d0V0);
     }
 
     if (hfCandCascade.v0Radius() < v0RadiusMin) {
-      SETBIT(status, 1 + CandidateRejection::v0Radius);
+      SETBIT(status, CandidateRejection::v0Radius);
     }
 
     if (hfCandCascade.v0CosPA() < v0CosPAMin) {
-      SETBIT(status, 1 + CandidateRejection::v0CosPA);
+      SETBIT(status, CandidateRejection::v0CosPA);
     }
 
     if (hfCandCascade.dcaV0daughters() > v0DauDCAMax) {
-      SETBIT(status, 1 + CandidateRejection::v0DauDCA);
+      SETBIT(status, CandidateRejection::v0DauDCA);
     }
 
     if ((std::abs(hfCandCascade.dcapostopv()) < v0DauDCAToPVMin) || (std::abs(hfCandCascade.dcanegtopv()) < v0DauDCAToPVMin)) {
-      SETBIT(status, 1 + CandidateRejection::v0DauDCAToPV);
+      SETBIT(status, CandidateRejection::v0DauDCAToPV);
     }
 
     double nSigmaTpcMax = nSigmaTpcMaxLowP;
@@ -181,7 +181,7 @@ struct HfCandidateSelectorLcToK0sPTree {
       nSigmaTpcMax = nSigmaTpcMaxHighP;
     }
     if (std::abs(hfCandCascade.nSigmaTPCPr0())>nSigmaTpcMax){
-      SETBIT(status, 1 + CandidateRejection::tpc);
+      SETBIT(status, CandidateRejection::tpc);
     }
 
     bool requireTof = requireTofLowP;;
@@ -205,14 +205,14 @@ struct HfCandidateSelectorLcToK0sPTree {
       }
     }
     if (!tof){
-      SETBIT(status, 1 + CandidateRejection::tof);
+      SETBIT(status, CandidateRejection::tof);
     }
 
     if (hfCandCascade.decayLength() < cuts->get(ptBin, "decLengthMin")) {
-      SETBIT(status, 1 + CandidateRejection::decLengthMin);
+      SETBIT(status, CandidateRejection::decLengthMin);
     }
     if (hfCandCascade.decayLength() > cuts->get(ptBin, "decLengthMax")) {
-      SETBIT(status, 1 + CandidateRejection::decLengthMax);
+      SETBIT(status, CandidateRejection::decLengthMax);
     }
 
 
@@ -221,23 +221,26 @@ struct HfCandidateSelectorLcToK0sPTree {
   
   void process(aod::HfCandCascFull const& candidates)
   {
-    int statusLc = 0; // final selection flag
+    uint32_t statusLc = 0; // final selection flag
 
     for (const auto& candidate : candidates) {               // looping over cascade candidates
 
 
       statusLc = 0;
       selection(candidate,statusLc);
-      SETBIT(statusLc,0);
+      //SETBIT(statusLc,0);
       hfSelLcToK0sPCandidate(statusLc);
 
       registry.fill(HIST("hCandidates"), 0.5);
-      if (statusLc == 1){
+      if (statusLc == 0){
         registry.fill(HIST("hCandidates"), 1.5);
       }
       int bin=2;
-      for (int i = 2; i<TMath::Power(2,CandidateRejection::NCandidateRejection)+1; i *= 2){
+      for (uint32_t i = 1; i<TMath::Power(2,CandidateRejection::NCandidateRejection)-1; i *= 2){
         if (i&statusLc){
+          if (statusLc == 0){
+            printf("================================================================== statusLc = %d\n",statusLc);
+          }
           registry.fill(HIST("hCandidates"),bin+0.5);
         }
         bin++;
@@ -251,7 +254,7 @@ struct HfCandidateSelectorLcToK0sPTree {
             registry.fill(HIST("hCandidatesSig"), 1.5);
           }
           int bin=2;
-          for (int i = 2; i<TMath::Power(2,CandidateRejection::NCandidateRejection)+1; i *= 2){
+          for (uint32_t i = 1; i<TMath::Power(2,CandidateRejection::NCandidateRejection)-1; i *= 2){
             if (i&statusLc){
               registry.fill(HIST("hCandidatesSig"),bin+0.5);
             }
@@ -264,7 +267,7 @@ struct HfCandidateSelectorLcToK0sPTree {
             registry.fill(HIST("hCandidatesBg"), 1.5);
           }
           int bin=2;
-          for (int i = 2; i<TMath::Power(2,CandidateRejection::NCandidateRejection)+1; i *= 2){
+          for (uint32_t i = 1; i<TMath::Power(2,CandidateRejection::NCandidateRejection)-1; i *= 2){
             if (i&statusLc){
               registry.fill(HIST("hCandidatesBg"),bin+0.5);
             }

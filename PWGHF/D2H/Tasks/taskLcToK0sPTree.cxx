@@ -33,7 +33,7 @@ struct HfTaskLcToK0sPTree {
   Configurable<double> etaCandMax{"etaCandMax", -1., "max. cand. pseudorapidity"};
   Configurable<std::vector<double>> binsPt{"binsPt", std::vector<double>{hf_cuts_lc_to_k0s_p::vecBinsPt}, "pT bin limits"};
 
-  Filter filterSelectCandidates = (aod::hf_sel_candidate_lc_to_k0s_p::isSelLcToK0sP == 1);
+  //Filter filterSelectCandidates = (aod::hf_sel_candidate_lc_to_k0s_p::isSelLcToK0sP == 0);
 
   HistogramRegistry registry{"registry"};
 
@@ -224,7 +224,8 @@ struct HfTaskLcToK0sPTree {
   }
 
   void
-    process(soa::Filtered<soa::Join<aod::HfCandCascFull, aod::HfSelLcToK0sP>> const& candidates)
+    //process(soa::Filtered<soa::Join<aod::HfCandCascFull, aod::HfSelLcToK0sP>> const& candidates)
+  process(soa::Join<aod::HfCandCascFull, aod::HfSelLcToK0sP>const& candidates)
   {
     // Printf("Candidates: %d", candidates.size());
     for (auto& candidate : candidates) {
@@ -234,6 +235,10 @@ struct HfTaskLcToK0sPTree {
         continue;
       }
       */
+
+      if (candidate.isSelLcToK0sP() != 0){
+        continue;
+      }
 
       if (etaCandMax >= 0. && std::abs(candidate.eta()) > etaCandMax) {
         // Printf("Candidate: eta rejection: %g", candidate.eta());
@@ -325,11 +330,17 @@ struct HfTaskLcToK0sPTree {
     }
   }
 
-  void processMc(soa::Filtered<soa::Join<aod::HfCandCascFull, aod::HfSelLcToK0sP>> const& candidates, aod::HfCandCascFullParticles const& particlesMC)
+  //void processMc(soa::Filtered<soa::Join<aod::HfCandCascFull, aod::HfSelLcToK0sP>> const& candidates, aod::HfCandCascFullParticles const& particlesMC)
+  void processMc(soa::Join<aod::HfCandCascFull, aod::HfSelLcToK0sP> const& candidates, aod::HfCandCascFullParticles const& particlesMC)
   {
     // MC rec.
     // Printf("MC Candidates: %d", candidates.size());
     for (auto& candidate : candidates) {
+
+      if (candidate.isSelLcToK0sP() != 0){
+        continue;
+      }
+
       if (etaCandMax >= 0. && std::abs(candidate.eta()) > etaCandMax) {
         // Printf("MC Rec.: eta rejection: %g", candidate.eta());
         continue;
