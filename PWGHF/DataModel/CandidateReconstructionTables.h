@@ -2073,8 +2073,8 @@ DECLARE_SOA_TABLE(HfCandCascFull, "AOD", "HFCANDCASCFull",
                   casc_full::V0MAntiLambda,
                   casc_full::V0MK0Short,
                   casc_full::V0MGamma,
-                  //casc_full::V0CtK0Short,
-                  //casc_full::V0CtLambda,
+                  casc_full::V0CtK0Short,
+                  casc_full::V0CtLambda,
                   v0data::DCAV0Daughters,
                   v0data::PxPos,
                   v0data::PyPos,
@@ -2099,7 +2099,7 @@ DECLARE_SOA_TABLE(HfCandCascFull, "AOD", "HFCANDCASCFull",
                   casc_full::Y,
                   casc_full::E,
                   casc_full::FlagMc);
-                  //casc_full::OriginMcRec);
+                  casc_full::OriginMcRec);
 
 DECLARE_SOA_TABLE(HfCandCascFullEvents, "AOD", "HFCANDCASCFullE",
                   collision::BCId,
@@ -2115,7 +2115,7 @@ DECLARE_SOA_TABLE(HfCandCascFullParticles, "AOD", "HFCANDCASCFullP",
                   casc_full::Phi,
                   casc_full::Y,
                   casc_full::FlagMc);
-                  //casc_full::OriginMcGen);
+                  casc_full::OriginMcGen);
 
 } // namespace o2::aod
 
