@@ -238,9 +238,6 @@ struct HfCandidateSelectorLcToK0sPTree {
       int bin=2;
       for (uint32_t i = 1; i<TMath::Power(2,CandidateRejection::NCandidateRejection)-1; i *= 2){
         if (i&statusLc){
-          if (statusLc == 0){
-            printf("================================================================== statusLc = %d\n",statusLc);
-          }
           registry.fill(HIST("hCandidates"),bin+0.5);
         }
         bin++;
