@@ -29,7 +29,7 @@ using namespace o2::aod::hf_cand_casc;
 using namespace o2::framework::expressions;
 
 /// LcToK0sp analysis task
-struct HfTaskLcToK0sPTree {
+struct HfTaskLcToK0sP {
   Configurable<double> etaCandMax{"etaCandMax", -1., "max. cand. pseudorapidity"};
   Configurable<std::vector<double>> binsPt{"binsPt", std::vector<double>{hf_cuts_lc_to_k0s_p::vecBinsPt}, "pT bin limits"};
 
@@ -277,8 +277,8 @@ struct HfTaskLcToK0sPTree {
       auto mLambda = candidate.v0MLambda();
       auto mAntiLambda = candidate.v0MAntiLambda();
       auto mGamma = candidate.v0MGamma();
-      auto ctV0K0Short = o2::aod::hf_cand_casc::ctV0K0s(candidate);
-      auto ctV0Lambda = o2::aod::hf_cand_casc::ctV0Lambda(candidate);
+      auto ctV0K0Short = candidate.v0CtK0Short();
+      auto ctV0Lambda = candidate.v0CtLambda();
       auto cpa = candidate.cpa();
       auto cpaXY = candidate.cpaXY();
       auto decayLength = candidate.decayLength();
@@ -384,8 +384,8 @@ struct HfTaskLcToK0sPTree {
       auto mLambda = candidate.v0MLambda();
       auto mAntiLambda = candidate.v0MAntiLambda();
       auto mGamma = candidate.v0MGamma();
-      auto ctV0K0Short = o2::aod::hf_cand_casc::ctV0K0s(candidate);
-      auto ctV0Lambda = o2::aod::hf_cand_casc::ctV0Lambda(candidate);
+      auto ctV0K0Short = candidate.v0CtK0Short();
+      auto ctV0Lambda = candidate.v0CtLambda();
       auto cpa = candidate.cpa();
       auto cpaXY = candidate.cpaXY();
       auto decayLength = candidate.decayLength();
@@ -535,12 +535,12 @@ struct HfTaskLcToK0sPTree {
       }
     }
   }
-  PROCESS_SWITCH(HfTaskLcToK0sPTree, processMc, "Process MC data", false);
+  PROCESS_SWITCH(HfTaskLcToK0sP, processMc, "Process MC data", false);
 };
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 {
   return WorkflowSpec{
-    adaptAnalysisTask<HfTaskLcToK0sPTree>(cfgc),
+    adaptAnalysisTask<HfTaskLcToK0sP>(cfgc),
   };
 }

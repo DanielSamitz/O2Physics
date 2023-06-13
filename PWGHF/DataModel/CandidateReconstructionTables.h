@@ -2098,7 +2098,7 @@ DECLARE_SOA_TABLE(HfCandCascFull, "AOD", "HFCANDCASCFull",
                   casc_full::Phi,
                   casc_full::Y,
                   casc_full::E,
-                  casc_full::FlagMc);
+                  casc_full::FlagMc,
                   casc_full::OriginMcRec);
 
 DECLARE_SOA_TABLE(HfCandCascFullEvents, "AOD", "HFCANDCASCFullE",
@@ -2114,7 +2114,7 @@ DECLARE_SOA_TABLE(HfCandCascFullParticles, "AOD", "HFCANDCASCFullP",
                   casc_full::Eta,
                   casc_full::Phi,
                   casc_full::Y,
-                  casc_full::FlagMc);
+                  casc_full::FlagMc,
                   casc_full::OriginMcGen);
 
 } // namespace o2::aod
