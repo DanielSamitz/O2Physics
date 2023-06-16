@@ -65,6 +65,8 @@ struct HfTaskLcToK0sP {
     registry.add("hEtaCandVsPtCand", "cascade candidates;candidate #it{#eta};p_{T}", {HistType::kTH2F, {axisEta, axisBinsPt}});
     registry.add("hPhiCand", "cascade candidates;candidate #it{#phi};entries", {HistType::kTH1F, {axisPhi}});
     registry.add("hPhiCandVsPtCand", "cascade candidates;candidate #it{#phi};p_{T}", {HistType::kTH2F, {axisPhi, axisBinsPt}});
+    registry.add("hYCand", "cascade candidates;candidate #it{#eta};entries", {HistType::kTH1F, {axisEta}});
+    registry.add("hYCandVsPtCand", "cascade candidates;candidate #it{#eta};p_{T}", {HistType::kTH2F, {axisEta, axisBinsPt}});
     registry.add("hMass", "cascade candidates;inv. mass (p K_{S}^{0}) (GeV/#it{c}^{2});entries", {HistType::kTH1F, {axisMassCand}});
     registry.add("hMassVsPtCand", "cascade candidates;inv. mass (p K_{S}^{0}) (GeV/#it{c}^{2});p_{T}", {HistType::kTH2F, {axisMassCand, axisBinsPt}});
     registry.add("hPtBach", "cascade candidates;bachelor #it{p}_{T} (GeV/#it{c});entries", {HistType::kTH1F, {axisPt}});
@@ -128,9 +130,15 @@ struct HfTaskLcToK0sP {
       registry.add("MC/Rec/hPhiCandVsPtCandRecSig", "cascade candidates;candidate #it{#phi};p_{T}", {HistType::kTH2F, {axisPhi, axisBinsPt}});
       registry.add("MC/Rec/hPhiCandRecBg", "cascade candidates;candidate #it{#phi};entries", {HistType::kTH1F, {axisPhi}});
       registry.add("MC/Rec/hPhiCandVsPtCandRecBg", "cascade candidates;candidate #it{#phi};p_{T}", {HistType::kTH2F, {axisPhi, axisBinsPt}});
+      registry.add("MC/Rec/hYCandRecSig", "cascade candidates;candidate #it{#eta};entries", {HistType::kTH1F, {axisEta}});
+      registry.add("MC/Rec/hYCandVsPtCandRecSig", "cascade candidates;candidate #it{#eta};p_{T}", {HistType::kTH2F, {axisEta, axisBinsPt}});
+      registry.add("MC/Rec/hYCandRecBg", "cascade candidates;candidate #it{#eta};entries", {HistType::kTH1F, {axisEta}});
+      registry.add("MC/Rec/hYCandVsPtCandRecBg", "cascade candidates;candidate #it{#eta};p_{T}", {HistType::kTH2F, {axisEta, axisBinsPt}});
       registry.add("MC/Gen/hPtCandGen", "cascade candidates;candidate #it{p}_{T} (GeV/#it{c});entries", {HistType::kTH1F, {axisPt}});
       registry.add("MC/Gen/hEtaCandGen", "cascade candidates;candidate #it{#eta};entries", {HistType::kTH1F, {axisEta}});
       registry.add("MC/Gen/hEtaCandVsPtCandGen", "cascade candidates;candidate #it{#eta};p_{T}", {HistType::kTH2F, {axisEta, axisBinsPt}});
+      registry.add("MC/Gen/hYCandGen", "cascade candidates;candidate #it{#eta};entries", {HistType::kTH1F, {axisEta}});
+      registry.add("MC/Gen/hYCandVsPtCandGen", "cascade candidates;candidate #it{#eta};p_{T}", {HistType::kTH2F, {axisEta, axisBinsPt}});
       registry.add("MC/Gen/hPhiCandGen", "cascade candidates;candidate #it{#phi};entries", {HistType::kTH1F, {axisPhi}});
       registry.add("MC/Gen/hPhiCandVsPtCandGen", "cascade candidates;candidate #it{#phi};p_{T}", {HistType::kTH2F, {axisPhi, axisBinsPt}});
       registry.add("MC/Rec/hMassRecSig", "cascade candidates;inv. mass (p K_{S}^{0}) (GeV/#it{c}^{2});p_{T}", {HistType::kTH1F, {axisMassCand}});
@@ -261,6 +269,7 @@ struct HfTaskLcToK0sP {
       auto ptCand = candidate.pt();
       auto eta = candidate.eta();
       auto phi = candidate.phi();
+      auto y = candidate.y();
       auto invMassLcToK0sP = candidate.m();
       auto ptProng0 = candidate.ptProng0();
       auto ptProng1 = candidate.ptProng1();
@@ -290,6 +299,8 @@ struct HfTaskLcToK0sP {
       registry.fill(HIST("hEtaCandVsPtCand"), eta, ptCand);
       registry.fill(HIST("hPhiCand"), phi);
       registry.fill(HIST("hPhiCandVsPtCand"), phi, ptCand);
+      registry.fill(HIST("hYCand"), y);
+      registry.fill(HIST("hYCandVsPtCand"), y, ptCand);
       registry.fill(HIST("hMass"), invMassLcToK0sP);
       registry.fill(HIST("hMassVsPtCand"), invMassLcToK0sP, ptCand);
       registry.fill(HIST("hPtBach"), ptProng0);
@@ -368,6 +379,7 @@ struct HfTaskLcToK0sP {
       auto ptCand = candidate.pt();
       auto eta = candidate.eta();
       auto phi = candidate.phi();
+      auto y = candidate.y();
       auto invMassLcToK0sP = candidate.m();
       auto ptProng0 = candidate.ptProng0();
       auto ptProng1 = candidate.ptProng1();
@@ -403,6 +415,8 @@ struct HfTaskLcToK0sP {
         registry.fill(HIST("MC/Rec/hEtaCandVsPtCandRecSig"), eta, ptCand);
         registry.fill(HIST("MC/Rec/hPhiCandRecSig"), phi);
         registry.fill(HIST("MC/Rec/hPhiCandVsPtCandRecSig"), phi, ptCand);
+        registry.fill(HIST("MC/Rec/hYCandRecSig"), y);
+        registry.fill(HIST("MC/Rec/hYCandVsPtCandRecSig"), y, ptCand);
         registry.fill(HIST("MC/Rec/hMassRecSig"), invMassLcToK0sP);
         registry.fill(HIST("MC/Rec/hMassVsPtCandRecSig"), invMassLcToK0sP, ptCand);
         registry.fill(HIST("MC/Rec/hPtBachRecSig"), ptProng0);
@@ -461,6 +475,8 @@ struct HfTaskLcToK0sP {
         registry.fill(HIST("MC/Rec/hEtaCandVsPtCandRecBg"), eta, ptCand);
         registry.fill(HIST("MC/Rec/hPhiCandRecBg"), phi);
         registry.fill(HIST("MC/Rec/hPhiCandVsPtCandRecBg"), phi, ptCand);
+        registry.fill(HIST("MC/Rec/hYCandRecBg"), y);
+        registry.fill(HIST("MC/Rec/hYCandVsPtCandRecBg"), y, ptCand);
         registry.fill(HIST("MC/Rec/hMassRecBg"), invMassLcToK0sP);
         registry.fill(HIST("MC/Rec/hMassVsPtCandRecBg"), invMassLcToK0sP, ptCand);
         registry.fill(HIST("MC/Rec/hPtBachRecBg"), ptProng0);
@@ -527,11 +543,14 @@ struct HfTaskLcToK0sP {
         auto ptCand = particle.pt();
         auto eta = particle.eta();
         auto phi = particle.phi();
+        auto y = particle.y();
         registry.fill(HIST("MC/Gen/hPtCandGen"), ptCand);
         registry.fill(HIST("MC/Gen/hEtaCandGen"), eta);
         registry.fill(HIST("MC/Gen/hEtaCandVsPtCandGen"), eta, ptCand);
         registry.fill(HIST("MC/Gen/hPhiCandGen"), phi);
         registry.fill(HIST("MC/Gen/hPhiCandVsPtCandGen"), phi, ptCand);
+        registry.fill(HIST("MC/Gen/hYCandGen"), y);
+        registry.fill(HIST("MC/Gen/hYCandVsPtCandGen"), y, ptCand);
       }
     }
   }

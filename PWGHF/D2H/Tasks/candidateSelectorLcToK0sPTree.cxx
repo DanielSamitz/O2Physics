@@ -47,15 +47,22 @@ enum CandidateRejection {
   decLengthMin,
   decLengthMax,
   v0CosPA,
+  fiducialY,
   NCandidateRejection
 };
 
 
 struct HfCandidateSelectorLcToK0sP {
   Produces<aod::HfSelLcToK0sP> hfSelLcToK0sPCandidate;
+  Produces<aod::HfCandCascFull2> reducedTree;
 
 
   Configurable<bool> doMc{"processMc", false, "fill histograms using MC information"};
+
+  Configurable<bool> writeReducedTree{"writeReducedTree", false, "write the selected candidates to a new tree"};
+
+  Configurable<bool> applyYCut{"applyYCut", true, "apply fiducial cut on candidate rapidity"};
+
 
   Configurable<double> pPidThreshold{"pPidThreshold", 1.0, "Threshold to switch between low and high p TrackSelectors"};
   Configurable<double> nSigmaTpcMaxLowP{"nSigmaTpcMaxLowP", 2.0, "Max nSigam in TPC for bachelor at low p"};
@@ -98,6 +105,7 @@ struct HfCandidateSelectorLcToK0sP {
     labels[2 + CandidateRejection::v0Radius] = "rej. v0Radius";
     labels[2 + CandidateRejection::decLengthMin] = "rej. decLengthMin";
     labels[2 + CandidateRejection::decLengthMax] = "rej. decLengthMax";
+    labels[2 + CandidateRejection::fiducialY] = "rej. fiducialY";
     AxisSpec axisCandidates = {nBinsCandidates, 0, nBinsCandidates, ""};
     AxisSpec axisBinsPt = {binsPt, "#it{p}_{T} (GeV/#it{c})"};
     registry.add("hCandidates", "Candidates;;entries", HistType::kTH1I, {axisCandidates});
@@ -220,6 +228,16 @@ struct HfCandidateSelectorLcToK0sP {
       SETBIT(status, CandidateRejection::decLengthMax);
     }
 
+    if (applyYCut){
+      double ycut = 0.8;
+      if (candPt < 5.){
+        ycut = -(0.2/15.)*pow(candPt,2)+(1.9/15.)*candPt+0.5;
+      }
+      if (std::abs(hfCandCascade.y()) > ycut) {
+        SETBIT(status, CandidateRejection::fiducialY);
+      }
+    }
+
 
   }
 
@@ -287,6 +305,79 @@ struct HfCandidateSelectorLcToK0sP {
             bin++;
           }
         }
+      }
+      if (statusLc==0 && writeReducedTree){
+        reducedTree(
+          candidate.bcId(),
+          candidate.numContrib(),
+          candidate.posX(),
+          candidate.posY(),
+          candidate.posZ(),
+          candidate.xSecondaryVertex(),
+          candidate.ySecondaryVertex(),
+          candidate.zSecondaryVertex(),
+          candidate.errorDecayLength(),
+          candidate.errorDecayLengthXY(),
+          candidate.chi2PCA(),
+          candidate.rSecondaryVertex(),
+          candidate.decayLength(),
+          candidate.decayLengthXY(),
+          candidate.decayLengthNormalised(),
+          candidate.decayLengthXYNormalised(),
+          candidate.impactParameterNormalised0(),
+          candidate.ptProng0(),
+          candidate.pProng0(),
+          candidate.impactParameterNormalised1(),
+          candidate.ptProng1(),
+          candidate.pProng1(),
+          candidate.pxProng0(),
+          candidate.pyProng0(),
+          candidate.pzProng0(),
+          candidate.pxProng1(),
+          candidate.pyProng1(),
+          candidate.pzProng1(),
+          candidate.impactParameter0(),
+          candidate.impactParameter1(),
+          candidate.errorImpactParameter0(),
+          candidate.errorImpactParameter1(),
+          candidate.v0x(),
+          candidate.v0y(),
+          candidate.v0z(),
+          candidate.v0Radius(),
+          candidate.v0CosPA(),
+          candidate.v0MLambda(),
+          candidate.v0MAntiLambda(),
+          candidate.v0MK0Short(),
+          candidate.v0MGamma(),
+          candidate.v0CtK0Short(),
+          candidate.v0CtLambda(),
+          candidate.dcaV0daughters(),
+          candidate.pxpos(),
+          candidate.pypos(),
+          candidate.pzpos(),
+          candidate.ptV0Pos(),
+          candidate.dcapostopv(),
+          candidate.pxneg(),
+          candidate.pyneg(),
+          candidate.pzneg(),
+          candidate.ptV0Neg(),
+          candidate.dcanegtopv(),
+          candidate.nSigmaTPCPr0(),
+          candidate.nSigmaTOFPr0(),
+          candidate.m(),
+          candidate.pt(),
+          candidate.p(),
+          candidate.cpa(),
+          candidate.cpaXY(),
+          candidate.ct(),
+          candidate.eta(),
+          candidate.phi(),
+          candidate.y(),
+          candidate.e(),
+          candidate.flagMc(),
+          candidate.originMcRec(),
+          false // dummy
+          ); 
       }
     }
   }
