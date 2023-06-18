@@ -81,5 +81,5 @@ o2physics_add_dpl_workflow(task-lc-to-k0s-p-tree
 
 o2physics_add_dpl_workflow(task-candidate-selector-lc-to-k0s-p-tree
                     SOURCES candidateSelectorLcToK0sPTree.cxx
-                    PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                    PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore ONNXRuntime::ONNXRuntime O2Physics::MLCore
                     COMPONENT_NAME Analysis)

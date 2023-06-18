@@ -20,6 +20,7 @@
 #include "Framework/AnalysisTask.h"
 #include "PWGHF/DataModel/CandidateReconstructionTables.h"
 #include "PWGHF/DataModel/CandidateSelectionTables.h"
+#include "Tools/ML/model.h"
 //#include "Common/Core/TrackSelectorPID.h"
 //#include "PWGHF/Utils/utilsDebugLcToK0sP.h"
 
@@ -27,6 +28,7 @@ using namespace o2;
 using namespace o2::framework;
 using namespace o2::aod::hf_cand_casc;
 using namespace o2::analysis::hf_cuts_lc_to_k0s_p;
+using namespace o2::ml;
 
 // candidate rejection types
 enum CandidateRejection {
@@ -48,6 +50,7 @@ enum CandidateRejection {
   decLengthMax,
   v0CosPA,
   fiducialY,
+  BDT,
   NCandidateRejection
 };
 
@@ -56,6 +59,10 @@ struct HfCandidateSelectorLcToK0sP {
   Produces<aod::HfSelLcToK0sP> hfSelLcToK0sPCandidate;
   Produces<aod::HfCandCascFull2> reducedTree;
 
+
+  Configurable<bool> applyML{"applyML", false, "Flag to enable or disable ML application"};
+  Configurable<std::string> onnxFile{"onnxFile", "", "ONNX file for ML model for Lc+ candidates"};
+  Configurable<double> thresholdBDTScore{"thresholdBDTScore", 0., "Threshold value for BDT output scores of Lc+ candidates"};
 
   Configurable<bool> doMc{"processMc", false, "fill histograms using MC information"};
 
@@ -83,6 +90,9 @@ struct HfCandidateSelectorLcToK0sP {
 
   HistogramRegistry registry{"registry", {}};
 
+  int dataTypeML;
+  OnnxModel model;
+
   void init(InitContext const&){
     const int nBinsCandidates = 2 + CandidateRejection::NCandidateRejection;
     std::string labels[nBinsCandidates];
@@ -106,6 +116,7 @@ struct HfCandidateSelectorLcToK0sP {
     labels[2 + CandidateRejection::decLengthMin] = "rej. decLengthMin";
     labels[2 + CandidateRejection::decLengthMax] = "rej. decLengthMax";
     labels[2 + CandidateRejection::fiducialY] = "rej. fiducialY";
+    labels[2 + CandidateRejection::fiducialY] = "rej. BDT";
     AxisSpec axisCandidates = {nBinsCandidates, 0, nBinsCandidates, ""};
     AxisSpec axisBinsPt = {binsPt, "#it{p}_{T} (GeV/#it{c})"};
     registry.add("hCandidates", "Candidates;;entries", HistType::kTH1I, {axisCandidates});
@@ -127,11 +138,29 @@ struct HfCandidateSelectorLcToK0sP {
       }
     }
 
+    if (applyML) {
+      registry.add<TH1>("hBDTScore", "BDT score distribution for Lc;BDT score;counts", HistType::kTH1F, {{100,0,1,"score"}});
+      if (doMc){
+        registry.add<TH1>("hBDTScoreRecSig", "BDT score distribution for Lc;BDT score;counts", HistType::kTH1F, {{100,0,1,"score"}});
+        registry.add<TH1>("hBDTScoreRecBg", "BDT score distribution for Lc;BDT score;counts", HistType::kTH1F, {{100,0,1,"score"}});
+      }
+      model.initModel(onnxFile.value, false, 1);
+      auto session = model.getSession();
+      auto inputShapes = session->GetInputShapes();
+      if (inputShapes[0][0] < 0) {
+        LOGF(warning, "Model for Lc with negative input shape likely because converted with hummingbird, setting it to 1.");
+        inputShapes[0][0] = 1;
+      }
+      std::vector<float> dummyInput(model.getNumInputNodes(), 1.);
+      model.evalModel(dummyInput); // Init the model evaluations
+      dataTypeML = session->GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetElementType();
+    }
+
   }
 
 
   template <typename T>
-  void selection(const T& hfCandCascade, uint32_t &status)
+  void selection(const T& hfCandCascade, uint32_t &status, float &bdtScore)
   {
     auto candPt = hfCandCascade.pt();
     int ptBin = findBin(binsPt, candPt);
@@ -238,6 +267,24 @@ struct HfCandidateSelectorLcToK0sP {
       }
     }
 
+    if (applyML && status==0){
+      std::vector<float> inputFeaturesF{hfCandCascade.ptProng0(), hfCandCascade.ptProng1(), hfCandCascade.impactParameter0(), hfCandCascade.impactParameter1(), hfCandCascade.v0Radius(), hfCandCascade.v0CosPA(), hfCandCascade.v0MLambda(), hfCandCascade.v0MAntiLambda(), hfCandCascade.v0MK0Short(), hfCandCascade.v0MGamma(), hfCandCascade.dcaV0daughters(), hfCandCascade.ptV0Pos(), hfCandCascade.dcapostopv(), hfCandCascade.ptV0Neg(), hfCandCascade.dcanegtopv(), hfCandCascade.nSigmaTPCPr0(), hfCandCascade.nSigmaTOFPr0()};
+      std::vector<double> inputFeaturesD{hfCandCascade.ptProng0(), hfCandCascade.ptProng1(), hfCandCascade.impactParameter0(), hfCandCascade.impactParameter1(), hfCandCascade.v0Radius(), hfCandCascade.v0CosPA(), hfCandCascade.v0MLambda(), hfCandCascade.v0MAntiLambda(), hfCandCascade.v0MK0Short(), hfCandCascade.v0MGamma(), hfCandCascade.dcaV0daughters(), hfCandCascade.ptV0Pos(), hfCandCascade.dcapostopv(), hfCandCascade.ptV0Neg(), hfCandCascade.dcanegtopv(), hfCandCascade.nSigmaTPCPr0(), hfCandCascade.nSigmaTOFPr0()};
+
+      if (dataTypeML == 1) {
+        auto scoresRaw = model.evalModel(inputFeaturesF);
+        bdtScore = scoresRaw[1];
+      } else if (dataTypeML == 11) {
+        auto scoresRaw = model.evalModel(inputFeaturesD);
+        bdtScore = scoresRaw[1];
+      } else {
+        LOG(error) << "Error running model inference for Lc: Unexpected input data type.";
+      }
+      if (bdtScore < thresholdBDTScore){
+        SETBIT(status, CandidateRejection::BDT);
+      }
+    }
+
 
   }
 
@@ -250,7 +297,15 @@ struct HfCandidateSelectorLcToK0sP {
 
 
       statusLc = 0;
-      selection(candidate,statusLc);
+      float bdtScore = -100.;
+      selection(candidate,statusLc, bdtScore);
+      registry.fill(HIST("hBDTScore"), bdtScore);
+      if (std::abs(candidate.flagMc()) == 1){
+        registry.fill(HIST("hBDTScoreRecSig"), bdtScore);
+      }
+      else {
+        registry.fill(HIST("hBDTScoreRecBg"), bdtScore);
+      }
       //SETBIT(statusLc,0);
       hfSelLcToK0sPCandidate(statusLc);
 
