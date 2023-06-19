@@ -60,6 +60,7 @@ struct HfCandidateSelectorLcToK0sP {
   Produces<aod::HfCandCascFull2> reducedTree;
 
 
+  Configurable<uint32_t> MLInputs{"MLInputs", 0, "Bit mask to select the input parameters for the BDT"};
   Configurable<bool> applyML{"applyML", false, "Flag to enable or disable ML application"};
   Configurable<std::string> onnxFile{"onnxFile", "", "ONNX file for ML model for Lc+ candidates"};
   Configurable<double> thresholdBDTScore{"thresholdBDTScore", 0., "Threshold value for BDT output scores of Lc+ candidates"};
@@ -139,10 +140,14 @@ struct HfCandidateSelectorLcToK0sP {
     }
 
     if (applyML) {
-      registry.add<TH1>("hBDTScore", "BDT score distribution for Lc;BDT score;counts", HistType::kTH1F, {{100,0,1,"score"}});
+      AxisSpec axisBDT = {100,0,1,"score"};
+      registry.add<TH1>("hBDTScore", "BDT score distribution for Lc;BDT score;counts", HistType::kTH1F, {axisBDT});
+      registry.add<TH2>("hBDTScoreVsPtCand", "BDT score distribution for Lc;BDT score;counts", HistType::kTH2F, {axisBDT,axisBinsPt});
       if (doMc){
-        registry.add<TH1>("hBDTScoreRecSig", "BDT score distribution for Lc;BDT score;counts", HistType::kTH1F, {{100,0,1,"score"}});
-        registry.add<TH1>("hBDTScoreRecBg", "BDT score distribution for Lc;BDT score;counts", HistType::kTH1F, {{100,0,1,"score"}});
+        registry.add<TH1>("hBDTScoreRecSig", "BDT score distribution for Lc;BDT score;counts", HistType::kTH1F, {axisBDT});
+        registry.add<TH2>("hBDTScoreVsPtCandRecSig", "BDT score distribution for Lc;BDT score;counts", HistType::kTH2F, {axisBDT,axisBinsPt});
+        registry.add<TH1>("hBDTScoreRecBg", "BDT score distribution for Lc;BDT score;counts", HistType::kTH1F, {axisBDT});
+        registry.add<TH2>("hBDTScoreVsPtCandRecBg", "BDT score distribution for Lc;BDT score;counts", HistType::kTH2F, {axisBDT,axisBinsPt});
       }
       model.initModel(onnxFile.value, false, 1);
       auto session = model.getSession();
@@ -268,9 +273,46 @@ struct HfCandidateSelectorLcToK0sP {
     }
 
     if (applyML && status==0){
-      std::vector<float> inputFeaturesF{hfCandCascade.ptProng0(), hfCandCascade.ptProng1(), hfCandCascade.impactParameter0(), hfCandCascade.impactParameter1(), hfCandCascade.v0Radius(), hfCandCascade.v0CosPA(), hfCandCascade.v0MLambda(), hfCandCascade.v0MAntiLambda(), hfCandCascade.v0MK0Short(), hfCandCascade.v0MGamma(), hfCandCascade.dcaV0daughters(), hfCandCascade.ptV0Pos(), hfCandCascade.dcapostopv(), hfCandCascade.ptV0Neg(), hfCandCascade.dcanegtopv(), hfCandCascade.nSigmaTPCPr0(), hfCandCascade.nSigmaTOFPr0()};
-      std::vector<double> inputFeaturesD{hfCandCascade.ptProng0(), hfCandCascade.ptProng1(), hfCandCascade.impactParameter0(), hfCandCascade.impactParameter1(), hfCandCascade.v0Radius(), hfCandCascade.v0CosPA(), hfCandCascade.v0MLambda(), hfCandCascade.v0MAntiLambda(), hfCandCascade.v0MK0Short(), hfCandCascade.v0MGamma(), hfCandCascade.dcaV0daughters(), hfCandCascade.ptV0Pos(), hfCandCascade.dcapostopv(), hfCandCascade.ptV0Neg(), hfCandCascade.dcanegtopv(), hfCandCascade.nSigmaTPCPr0(), hfCandCascade.nSigmaTOFPr0()};
-
+      float inputParams[] = {
+      hfCandCascade.rSecondaryVertex(),
+      hfCandCascade.decayLength(),
+      hfCandCascade.ptProng0(),
+      hfCandCascade.ptProng1(),
+      hfCandCascade.impactParameter0(),
+      hfCandCascade.impactParameter1(),
+      hfCandCascade.v0Radius(),
+      hfCandCascade.v0CosPA(),
+      hfCandCascade.v0MLambda(),
+      hfCandCascade.v0MAntiLambda(),
+      hfCandCascade.v0MK0Short(),
+      hfCandCascade.v0MGamma(),
+      hfCandCascade.v0CtK0Short(),
+      hfCandCascade.v0CtLambda(),
+      hfCandCascade.dcaV0daughters(),
+      hfCandCascade.ptV0Pos(),
+      hfCandCascade.dcapostopv(),
+      hfCandCascade.ptV0Neg(),
+      hfCandCascade.dcanegtopv(),
+      hfCandCascade.nSigmaTPCPr0(),
+      hfCandCascade.nSigmaTOFPr0(),
+      hfCandCascade.cpa(),
+      hfCandCascade.ct(),
+      hfCandCascade.y()
+      };
+      std::vector<float> inputFeaturesF;
+      std::vector<double> inputFeaturesD;
+      uint32_t i=1;
+      for (const auto& p : inputParams){
+        if (i&MLInputs){
+          inputFeaturesF.push_back(p);
+          inputFeaturesD.push_back(p);
+        }
+        i=i*2;
+      }
+      //std::vector<float> inputFeaturesF{hfCandCascade.ptProng0(), hfCandCascade.ptProng1(), hfCandCascade.impactParameter0(), hfCandCascade.impactParameter1(), hfCandCascade.v0Radius(), hfCandCascade.v0CosPA(), hfCandCascade.v0MLambda(), hfCandCascade.v0MAntiLambda(), hfCandCascade.v0MK0Short(), hfCandCascade.v0MGamma(), hfCandCascade.dcaV0daughters(), hfCandCascade.ptV0Pos(), hfCandCascade.dcapostopv(), hfCandCascade.ptV0Neg(), hfCandCascade.dcanegtopv(), hfCandCascade.nSigmaTPCPr0(), hfCandCascade.nSigmaTOFPr0()};
+      //std::vector<double> inputFeaturesD{hfCandCascade.ptProng0(), hfCandCascade.ptProng1(), hfCandCascade.impactParameter0(), hfCandCascade.impactParameter1(), hfCandCascade.v0Radius(), hfCandCascade.v0CosPA(), hfCandCascade.v0MLambda(), hfCandCascade.v0MAntiLambda(), hfCandCascade.v0MK0Short(), hfCandCascade.v0MGamma(), hfCandCascade.dcaV0daughters(), hfCandCascade.ptV0Pos(), hfCandCascade.dcapostopv(), hfCandCascade.ptV0Neg(), hfCandCascade.dcanegtopv(), hfCandCascade.nSigmaTPCPr0(), hfCandCascade.nSigmaTOFPr0()};
+      //std::vector<float> inputFeaturesF{hfCandCascade.ptProng1(), hfCandCascade.impactParameter0(), hfCandCascade.impactParameter1(), hfCandCascade.v0Radius(), hfCandCascade.v0CosPA(), hfCandCascade.v0MLambda(), hfCandCascade.v0MAntiLambda(), hfCandCascade.v0MK0Short(), hfCandCascade.v0MGamma(), hfCandCascade.v0CtK0Short(), hfCandCascade.dcaV0daughters(), hfCandCascade.ptV0Pos(), hfCandCascade.dcapostopv(), hfCandCascade.ptV0Neg(), hfCandCascade.dcanegtopv(), hfCandCascade.nSigmaTPCPr0(), hfCandCascade.nSigmaTOFPr0()};
+      //std::vector<double> inputFeaturesD{hfCandCascade.ptProng1(), hfCandCascade.impactParameter0(), hfCandCascade.impactParameter1(), hfCandCascade.v0Radius(), hfCandCascade.v0CosPA(), hfCandCascade.v0MLambda(), hfCandCascade.v0MAntiLambda(), hfCandCascade.v0MK0Short(), hfCandCascade.v0MGamma(), hfCandCascade.v0CtK0Short(), hfCandCascade.dcaV0daughters(), hfCandCascade.ptV0Pos(), hfCandCascade.dcapostopv(), hfCandCascade.ptV0Neg(), hfCandCascade.dcanegtopv(), hfCandCascade.nSigmaTPCPr0(), hfCandCascade.nSigmaTOFPr0()};
       if (dataTypeML == 1) {
         auto scoresRaw = model.evalModel(inputFeaturesF);
         bdtScore = scoresRaw[1];
@@ -299,14 +341,6 @@ struct HfCandidateSelectorLcToK0sP {
       statusLc = 0;
       float bdtScore = -100.;
       selection(candidate,statusLc, bdtScore);
-      registry.fill(HIST("hBDTScore"), bdtScore);
-      if (std::abs(candidate.flagMc()) == 1){
-        registry.fill(HIST("hBDTScoreRecSig"), bdtScore);
-      }
-      else {
-        registry.fill(HIST("hBDTScoreRecBg"), bdtScore);
-      }
-      //SETBIT(statusLc,0);
       hfSelLcToK0sPCandidate(statusLc);
 
       double pt = candidate.pt();
@@ -361,6 +395,22 @@ struct HfCandidateSelectorLcToK0sP {
           }
         }
       }
+
+      if (applyML){
+        registry.fill(HIST("hBDTScore"), bdtScore);
+        registry.fill(HIST("hBDTScoreVsPtCand"), bdtScore, pt);
+        if (doMc){
+          if (std::abs(candidate.flagMc()) == 1){
+            registry.fill(HIST("hBDTScoreRecSig"), bdtScore);
+            registry.fill(HIST("hBDTScoreVsPtCandRecSig"), bdtScore, pt);
+          }
+          else {
+            registry.fill(HIST("hBDTScoreRecBg"), bdtScore);
+            registry.fill(HIST("hBDTScoreVsPtCandRecBg"), bdtScore, pt);
+          }
+        }
+      }
+
       if (statusLc==0 && writeReducedTree){
         reducedTree(
           candidate.bcId(),
