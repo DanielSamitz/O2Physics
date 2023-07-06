@@ -17,6 +17,7 @@
 #include "Framework/AnalysisTask.h"
 #include "Framework/HistogramRegistry.h"
 #include "Framework/Logger.h"
+#include "PWGEM/Dilepton/Utils/MomentumSmearer.h"
 #include "Math/Vector4D.h"
 #include "Math/Vector3D.h"
 #include "TFile.h"
@@ -91,7 +92,7 @@ DECLARE_SOA_TABLE(eeTTree, "AOD", "EETTREE",
 
 struct lmeelfcocktailaod {
 
- Produces<aod::eeTTree> tree;
+  Produces<aod::eeTTree> tree;
   HistogramRegistry registry{"registry", {}};
   Int_t nInputParticles = 17;
   std::vector<TString> fParticleListNames = {"Pi0", "Eta", "EtaP", "EtaP_dalitz_photon", "EtaP_dalitz_omega", "Rho", "Omega", "Omega_2body", "Omega_dalitz", "Phi", "Phi_2body", "Phi_dalitz_eta", "Phi_dalitz_pi0", "Jpsi", "Jpsi_2body", "Jpsi_radiative", "Virtual_Photon"};
@@ -103,11 +104,6 @@ struct lmeelfcocktailaod {
   TH1F* fhwMultmT2;
   TH1F* fhKW;
   TF1* ffVPHpT;
-  TObjArray* fArr;
-  TObjArray* fArrResoPt;
-  TObjArray* fArrResoEta;
-  TObjArray* fArrResoPhi_Pos;
-  TObjArray* fArrResoPhi_Neg;
 
   std::vector<std::shared_ptr<TH1>> fmee_orig, fmotherpT_orig, fphi_orig, frap_orig, fmee_orig_wALT, fmotherpT_orig_wALT, fmee, fphi, frap, fmee_wALT;
   std::vector<std::shared_ptr<TH2>> fpteevsmee_wALT, fpteevsmee_orig_wALT, fpteevsmee_orig, fpteevsmee;
@@ -116,9 +112,12 @@ struct lmeelfcocktailaod {
   int nbDCAtemplate;
   TH1F** fh_DCAtemplates;
 
+  MomentumSmearer smearer;
+
+  Double_t eMass;
+
   Configurable<int> fCollisionSystem{"cfgCollisionSystem", 200, "set the collision system"};
   Configurable<bool> fConfigWriteTTree{"cfgWriteTTree", false, "write tree output"};
-  Configurable<bool> fConfigDoPairing{"cfgDoPairing", true, "do like and unlike sign pairing"};
   Configurable<float> fConfigMaxEta{"cfgMaxEta", 0.8, "maxium |eta|"};
   Configurable<float> fConfigMinPt{"cfgMinPt", 0.2, "minium pT"};
   Configurable<float> fConfigMaxPt{"cfgMaxPt", 8.0, "maximum pT"};
@@ -133,10 +132,9 @@ struct lmeelfcocktailaod {
   Configurable<std::string> fConfigResFileName{"cfgResFileName", "", "name of resolution file"};
   Configurable<std::string> fConfigEffFileName{"cfgEffFileName", "", "name of efficiency file"};
   Configurable<float> fConfigMinOpAng{"cfgMinOpAng", 0.050, "minimum opening angle"};
-  Configurable<bool> fConfigDoRapidityCut{"cfgDoRapidityCut", false, "apply rapidity cut"};
-  Configurable<float> fConfigRapidityCut{"cfgRapidityCut", 1.0, "rapdity cut"};
+  //Configurable<bool> fConfigDoRapidityCut{"cfgDoRapidityCut", false, "apply rapidity cut"};
+  //Configurable<float> fConfigRapidityCut{"cfgRapidityCut", 1.0, "rapdity cut"};
   Configurable<int> fConfigNBinsPhi{"cfgNBinsPhi", 240, "number of bins in phi"};
-  Configurable<float> fConfigMaxAbsPhi{"cfgMaxAbsPhi", TMath::TwoPi() / 2, "bin range in phi"};
   Configurable<int> fConfigNBinsRap{"cfgNBinsRap", 240, "number of bins in rap"};
   Configurable<float> fConfigMaxAbsRap{"cfgMaxAbsRap", 1.2, "bin range in rap"};
   Configurable<std::string> fConfigEffHistName{"cfgEffHistName", "fhwEffpT", "hisogram name in efficiency file"};
@@ -158,9 +156,9 @@ struct lmeelfcocktailaod {
   Configurable<std::string> fConfigPhotonPtDirName{"cfgPhotonPtDirName", "", "directory name for photon pT parametrization"};
   Configurable<std::string> fConfigPhotonPtFuncName{"cfgPhotonPtFuncName", "111_pt", "function name for photon pT parametrization"};
 
-  ConfigurableAxis fConfigPtBins{"cfgPtBins", {0., 0.5, 1, 1.5, 2., 2.5, 3., 3.5, 4., 4.5, 5., 5.5, 6., 6.5, 7., 7.5, 8.}, "pT bins"};
-  ConfigurableAxis fConfigMBins{"cfgMBins", {0., 0.08, 0.14, 0.2, 1.1, 2.7, 2.8, 3.2, 5.0}, "mee bins"};
-  ConfigurableAxis fConfigDCABins{"cfgDCABins", {0., 0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 3., 4., 5., 7., 10.}, "DCA bins"};
+  ConfigurableAxis fConfigPtBins{"cfgPtBins", {VARIABLE_WIDTH, 0., 0.5, 1, 1.5, 2., 2.5, 3., 3.5, 4., 4.5, 5., 5.5, 6., 6.5, 7., 7.5, 8.}, "pT bins"};
+  ConfigurableAxis fConfigMBins{"cfgMBins", {VARIABLE_WIDTH, 0., 0.08, 0.14, 0.2, 1.1, 2.7, 2.8, 3.2, 5.0}, "mee bins"};
+  ConfigurableAxis fConfigDCABins{"cfgDCABins", {VARIABLE_WIDTH,0., 0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 3., 4., 5., 7., 10.}, "DCA bins"};
 
   Configurable<std::vector<double>> fConfigDCATemplateEdges{"cfgDCATemplateEdges", {0., .3, .4, .6, 1., 2.}, "DCA template edges"};
 
@@ -174,17 +172,20 @@ struct lmeelfcocktailaod {
     DCATemplateEdges.push_back(10000000.);
 
     SetHistograms();
-    GetEffHisto(TString(fConfigEffFileName), TString(fConfigEffHistName));
-    if (fConfigResolType == 1) {
-      GetResHisto(TString(fConfigResFileName), TString(fConfigResPHistName));
-    } else if (fConfigResolType == 2) {
-      GetResHisto(TString(fConfigResFileName), TString(fConfigResPtHistName), TString(fConfigResEtaHistName), TString(fConfigResPhiPosHistName), TString(fConfigResPhiNegHistName));
+
+    if ((TString(fConfigEffFileName).BeginsWith("alien://") && TString(fConfigEffFileName).EndsWith(".root")) || (TString(fConfigResFileName).BeginsWith("alien://") && TString(fConfigResFileName).EndsWith(".root")) || (TString(fConfigDCAFileName).BeginsWith("alien://") && TString(fConfigDCAFileName).EndsWith(".root")) || (TString(fConfigMultFileName).BeginsWith("alien://") && TString(fConfigMultFileName).EndsWith(".root")) || (TString(fConfigPhotonPtFileName).BeginsWith("alien://") && TString(fConfigPhotonPtFileName).EndsWith(".root"))) {
+      LOGP(info, "Connecting to grid via TGrid");
+      TGrid::Connect("alien://");
     }
+
+    GetEffHisto(TString(fConfigEffFileName), TString(fConfigEffHistName));
+    InitSmearer(TString(fConfigResFileName), TString(fConfigResPtHistName), TString(fConfigResEtaHistName), TString(fConfigResPhiPosHistName), TString(fConfigResPhiNegHistName));
     GetDCATemplates(TString(fConfigDCAFileName), TString(fConfigDCAHistName));
     GetMultHisto(TString(fConfigMultFileName), TString(fConfigMultHistPtName), TString(fConfigMultHistPt2Name), TString(fConfigMultHistMtName), TString(fConfigMultHistMt2Name));
     if (fConfigDoVirtPh) {
       GetPhotonPtParametrization(TString(fConfigPhotonPtFileName), TString(fConfigPhotonPtDirName), TString(fConfigPhotonPtFuncName));
     }
+    eMass = (TDatabasePDG::Instance()->GetParticle(11))->Mass();
     fillKrollWada();
   }
 
@@ -195,14 +196,20 @@ struct lmeelfcocktailaod {
     double fwEffpT, fd1origpt, fd1origp, fd1origeta, fd1origphi, fd2origpt, fd2origp, fd2origeta, fd2origphi, feeorigpt, feeorigp, feeorigm, feeorigeta, feeorigphi, feeorigphiv, fpairDCA, fd1DCA = 0., fd2DCA = 0., fd1pt, fd1p, fd1eta, fd1phi, fd2pt, fd2p, fd2eta, fd2phi, feept, feemt, feep, feem, feeeta, feephi, feephiv, fmotherpt, fmothermt, fmotherp, fmotherm, fmothereta, fmotherphi, fID, fweight, fwMultpT, fwMultpT2, fwMultmT, fwMultmT2;
     bool fpass;
 
-    Partition<aod::McParticles> Mothers = ((aod::mcparticle::pdgCode == 111) || (aod::mcparticle::pdgCode == 221) || (aod::mcparticle::pdgCode == 331) || (aod::mcparticle::pdgCode == 113) || (aod::mcparticle::pdgCode == 223) || (aod::mcparticle::pdgCode == 333) || (aod::mcparticle::pdgCode == 443));
-    Mothers.bindTable(mcParticles);
-    for (auto& mother : Mothers) {
+    for (auto& mother : mcParticles) {
 
-      if (!mother.has_daughters())
-        continue;
       if (mother.has_mothers())
         continue;
+      if (!mother.has_daughters())
+        continue;
+
+      bool isSelectedMother = false;
+      int motherPdgCode = mother.pdgCode();
+      if ( motherPdgCode == 111 || motherPdgCode == 221 || motherPdgCode == 331 || motherPdgCode == 113 || motherPdgCode == 223 || motherPdgCode == 333 || motherPdgCode == 443 )
+        isSelectedMother = true;
+      if (!isSelectedMother)
+        continue;
+      
 
       int fdectyp = 0;
       int fdau3pdg = 0;
@@ -229,14 +236,16 @@ struct lmeelfcocktailaod {
       if (fdectyp > 4)
         continue; // here dectype==4 is included, but when filling histograms it is excluded?
 
+      /*
       // Not sure about this cut. From GammaConv group. Harmless a priori.
       if (!(fabs(dau1.E() - dau1.Pz()) > 0.))
         continue; // taken from Run2 version. Does this make sense?
 
+      
       // taken from Run2 version. why rap cut is applied only to dau1 and not dau2?
       Double_t yPre = (dau1.E() + dau1.Pz()) / (dau1.E() - dau1.Pz());
-      Double_t y = 0.5 * TMath::Log(yPre);
       if (fConfigDoRapidityCut) { // Apply rapidity cut on mother consistent with GammaConv group.
+        Double_t y = 0.5 * TMath::Log(yPre);
         if (yPre <= 0.)
           continue;
         if (TMath::Abs(y) > fConfigRapidityCut)
@@ -244,7 +253,7 @@ struct lmeelfcocktailaod {
       } else {
         if (yPre == 0.)
           continue;
-      }
+      }*/
 
       // create dielectron before resolution effects:
       ee = dau1 + dau2;
@@ -321,30 +330,34 @@ struct lmeelfcocktailaod {
       feeorigphiv = PhiV(dau1, dau2);
 
       // get the efficiency weight
-      Int_t effbin = fhwEffpT->FindBin(dau1.Pt());
+      Int_t effbin = fhwEffpT->FindBin(fd1origpt);
       fwEffpT = fhwEffpT->GetBinContent(effbin);
-      effbin = fhwEffpT->FindBin(dau2.Pt());
+      effbin = fhwEffpT->FindBin(fd2origpt);
       fwEffpT = fwEffpT * fhwEffpT->GetBinContent(effbin);
 
       // Resolution and acceptance
-      dau1 = ApplyResolution(dau1, -1, fConfigResolType);
-      dau2 = ApplyResolution(dau2, 1, fConfigResolType);
+      dau1 = applySmearingPxPyPzE(-1, dau1);
+      dau2 = applySmearingPxPyPzE(1, dau2);
+      fd1pt = dau1.Pt();
+      fd2pt = dau2.Pt();
+      fd1eta = dau1.Eta();
+      fd2eta = dau2.Eta();
       fpass = true;
-      if (dau1.Pt() < fConfigMinPt || dau2.Pt() < fConfigMinPt)
+      if (fd1pt < fConfigMinPt || fd2pt < fConfigMinPt)
         fpass = false; // leg pT cut
-      if (dau1.Pt() > fConfigMaxPt || dau2.Pt() > fConfigMaxPt)
+      if (fd1pt > fConfigMaxPt || fd2pt > fConfigMaxPt)
         fpass = false; // leg pT cut
       if (dau1.Vect().Unit().Dot(dau2.Vect().Unit()) > TMath::Cos(fConfigMinOpAng))
         fpass = false; // opening angle cut
-      if (TMath::Abs(dau1.Eta()) > fConfigMaxEta || TMath::Abs(dau2.Eta()) > fConfigMaxEta)
+      if (TMath::Abs(fd1eta) > fConfigMaxEta || TMath::Abs(fd2eta) > fConfigMaxEta)
         fpass = false;
 
       // get the pair DCA (based in smeared pT)
       for (int jj = 0; jj < nbDCAtemplate; jj++) { // loop over DCA templates
-        if (dau1.Pt() >= DCATemplateEdges[jj] && dau1.Pt() < DCATemplateEdges[jj + 1]) {
+        if (fd1pt >= DCATemplateEdges[jj] && fd1pt < DCATemplateEdges[jj + 1]) {
           fd1DCA = fh_DCAtemplates[jj]->GetRandom();
         }
-        if (dau2.Pt() >= DCATemplateEdges[jj] && dau2.Pt() < DCATemplateEdges[jj + 1]) {
+        if (fd2pt >= DCATemplateEdges[jj] && fd2pt < DCATemplateEdges[jj + 1]) {
           fd2DCA = fh_DCAtemplates[jj]->GetRandom();
         }
       }
@@ -352,13 +365,9 @@ struct lmeelfcocktailaod {
 
       // Fill tree words after resolution/acceptance
       ee = dau1 + dau2;
-      fd1pt = dau1.Pt();
       fd1p = dau1.P();
-      fd1eta = dau1.Eta();
       fd1phi = dau1.Phi();
-      fd2pt = dau2.Pt();
       fd2p = dau2.P();
-      fd2eta = dau2.Eta();
       fd2phi = dau2.Phi();
       feept = ee.Pt();
       feemt = ee.Mt();
@@ -410,31 +419,31 @@ struct lmeelfcocktailaod {
       if (fdectyp < 4) {                   // skip for the moment 4-particle decays
         for (Int_t jj = 0; jj < 3; jj++) { // fill the different hindex -> particles
           if (hindex[jj] > -1) {
-            fmee_orig[hindex[jj]]->Fill(ee_orig.M(), fweight);
+            fmee_orig[hindex[jj]]->Fill(feeorigm, fweight);
             if (fConfigALTweight == 1 || fConfigALTweight == 11) {
               fmotherpT_orig[hindex[jj]]->Fill(fmothermt, fweight);
             } else if (fConfigALTweight == 2 || fConfigALTweight == 22 || fConfigALTweight == 0) {
               fmotherpT_orig[hindex[jj]]->Fill(fmotherpt, fweight);
             }
-            fpteevsmee_orig[hindex[jj]]->Fill(ee_orig.M(), ee.Pt(), fweight);
-            fphi_orig[hindex[jj]]->Fill(ee_orig.Phi(), fweight);
+            fpteevsmee_orig[hindex[jj]]->Fill(feeorigm, feeorigpt, fweight);
+            fphi_orig[hindex[jj]]->Fill(feeorigphi, fweight);
             frap_orig[hindex[jj]]->Fill(ee_orig.Rapidity(), fweight);
             fmee_orig_wALT[hindex[jj]]->Fill(ee_orig.M(), fweight * fwALT);
-            fpteevsmee_orig_wALT[hindex[jj]]->Fill(ee_orig.M(), ee.Pt(), fweight * fwALT);
+            fpteevsmee_orig_wALT[hindex[jj]]->Fill(feeorigm, feept, fweight * fwALT);
             if (fConfigALTweight == 1 || fConfigALTweight == 11) {
               fmotherpT_orig_wALT[hindex[jj]]->Fill(fmothermt, fweight * fwALT);
             } else if (fConfigALTweight == 2 || fConfigALTweight == 22 || fConfigALTweight == 0) {
               fmotherpT_orig_wALT[hindex[jj]]->Fill(fmotherpt, fweight * fwALT);
             }
             if (fpass) {
-              fmee[hindex[jj]]->Fill(ee.M(), fweight);
-              fpteevsmee[hindex[jj]]->Fill(ee.M(), ee.Pt(), fweight);
-              fphi[hindex[jj]]->Fill(ee.Phi(), fweight);
+              fmee[hindex[jj]]->Fill(feem, fweight);
+              fpteevsmee[hindex[jj]]->Fill(feem, feept, fweight);
+              fphi[hindex[jj]]->Fill(feephi, fweight);
               frap[hindex[jj]]->Fill(ee.Rapidity(), fweight);
-              registry.fill(HIST("DCAeevsmee"), ee.M(), fpairDCA, fweight);
-              registry.fill(HIST("DCAeevsptee"), ee.Pt(), fpairDCA, fweight);
-              fmee_wALT[hindex[jj]]->Fill(ee.M(), fweight * fwALT);
-              fpteevsmee_wALT[hindex[jj]]->Fill(ee.M(), ee.Pt(), fweight * fwALT);
+              registry.fill(HIST("DCAeevsmee"), feem, fpairDCA, fweight);
+              registry.fill(HIST("DCAeevsptee"), feept, fpairDCA, fweight);
+              fmee_wALT[hindex[jj]]->Fill(feem, fweight * fwALT);
+              fpteevsmee_wALT[hindex[jj]]->Fill(feem, feept, fweight * fwALT);
             }
           }
         }
@@ -493,36 +502,36 @@ struct lmeelfcocktailaod {
           feeorigphiv = PhiV(dau1, dau2);
 
           // get the efficiency weight
-          Int_t effbin = fhwEffpT->FindBin(dau1.Pt());
+          Int_t effbin = fhwEffpT->FindBin(fd1origpt);
           fwEffpT = fhwEffpT->GetBinContent(effbin);
-          effbin = fhwEffpT->FindBin(dau2.Pt());
+          effbin = fhwEffpT->FindBin(fd2origpt);
           fwEffpT = fwEffpT * fhwEffpT->GetBinContent(effbin);
 
           // Resolution and acceptance
           //-------------------------
-          dau1 = ApplyResolution(dau1, 1, fConfigResolType);
-          dau2 = ApplyResolution(dau2, -1, fConfigResolType);
+          dau1 = applySmearingPxPyPzE(-1, dau1);
+          dau2 = applySmearingPxPyPzE(1, dau2);
+          fd1pt = dau1.Pt();
+          fd1eta = dau1.Eta();
+          fd2pt = dau2.Pt();
+          fd2eta = dau2.Eta();
           fpass = true;
-          if (dau1.Pt() < fConfigMinPt || dau2.Pt() < fConfigMinPt)
+          if (fd1pt < fConfigMinPt || fd2pt < fConfigMinPt)
             fpass = false; // leg pT cut
-          if (dau1.Pt() > fConfigMaxPt || dau2.Pt() > fConfigMaxPt)
+          if (fd1pt > fConfigMaxPt || fd2pt > fConfigMaxPt)
             fpass = false; // leg pT cut
           if (dau1.Vect().Unit().Dot(dau2.Vect().Unit()) > TMath::Cos(fConfigMinOpAng))
             fpass = false; // opening angle cut
-          if (TMath::Abs(dau1.Eta()) > fConfigMaxEta || TMath::Abs(dau2.Eta()) > fConfigMaxEta)
+          if (TMath::Abs(fd1eta) > fConfigMaxEta || TMath::Abs(fd2eta) > fConfigMaxEta)
             fpass = false;
 
           fpairDCA = 10000.; // ??
 
           // Fill tree words after resolution/acceptance
           ee = dau1 + dau2;
-          fd1pt = dau1.Pt();
           fd1p = dau1.P();
-          fd1eta = dau1.Eta();
           fd1phi = dau1.Phi();
-          fd2pt = dau2.Pt();
           fd2p = dau2.P();
-          fd2eta = dau2.Eta();
           fd2phi = dau2.Phi();
           feept = ee.Pt();
           feemt = ee.Mt();
@@ -550,14 +559,14 @@ struct lmeelfcocktailaod {
           // Fill the histograms
           for (Int_t jj = 0; jj < 3; jj++) { // fill the different hindex -> particles
             if (hindex[jj] > -1) {
-              fmee_orig[hindex[jj]]->Fill(ee_orig.M(), VPHweight);
-              fpteevsmee_orig[hindex[jj]]->Fill(ee_orig.M(), ee.Pt(), VPHweight);
-              fphi_orig[hindex[jj]]->Fill(ee_orig.Phi(), VPHweight);
+              fmee_orig[hindex[jj]]->Fill(feeorigm, VPHweight);
+              fpteevsmee_orig[hindex[jj]]->Fill(feeorigm, feept, VPHweight);
+              fphi_orig[hindex[jj]]->Fill(feeorigphi, VPHweight);
               frap_orig[hindex[jj]]->Fill(ee_orig.Rapidity(), VPHweight);
               if (fpass) {
-                fmee[hindex[jj]]->Fill(ee.M(), VPHweight);
-                fpteevsmee[hindex[jj]]->Fill(ee.M(), ee.Pt(), VPHweight);
-                fphi[hindex[jj]]->Fill(ee.Phi(), VPHweight);
+                fmee[hindex[jj]]->Fill(feem, VPHweight);
+                fpteevsmee[hindex[jj]]->Fill(feem, feept, VPHweight);
+                fphi[hindex[jj]]->Fill(feephi, VPHweight);
                 frap[hindex[jj]]->Fill(ee.Rapidity(), VPHweight);
               }
             }
@@ -584,17 +593,33 @@ struct lmeelfcocktailaod {
     return outPhiV;
   }
 
+  PxPyPzEVector applySmearingPxPyPzE(int ch, PxPyPzEVector vec)
+  {
+    PxPyPzEVector vecsmeared;
+    float ptsmeared, etasmeared, phismeared;
+    smearer.applySmearing(ch, vec.Pt(), vec.Eta(), vec.Phi(), ptsmeared, etasmeared, phismeared);
+    float sPx = ptsmeared * cos(phismeared);
+    float sPy = ptsmeared * sin(phismeared);
+    float sPz = ptsmeared * sinh(etasmeared);
+    float sP = ptsmeared * cosh(etasmeared);
+    float sE = sqrt(sP * sP + eMass * eMass);
+
+    vecsmeared.SetPxPyPzE(sPx, sPy, sPz, sE);
+
+    return vecsmeared;
+  }
+
   void SetHistograms()
   {
 
     AxisSpec ptAxis = {fConfigNBinsPtee, fConfigMinPtee, fConfigMaxPtee, "#it{p}_{T,ee} (GeV/c)"};
     AxisSpec mAxis = {fConfigNBinsMee, fConfigMinMee, fConfigMaxMee, "#it{m}_{ee} (GeV/c^{2})"};
-    AxisSpec phiAxis = {fConfigNBinsPhi, -fConfigMaxAbsPhi, fConfigMaxAbsPhi, "#it{phi}_{ee}"};
+    AxisSpec phiAxis = {fConfigNBinsPhi, -TMath::TwoPi() / 2, TMath::TwoPi() / 2, "#it{phi}_{ee}"};
     AxisSpec rapAxis = {fConfigNBinsRap, -fConfigMaxAbsRap, fConfigMaxAbsRap, "#it{y}_{ee}"};
 
     registry.add<TH1>("NEvents", "NEvents", HistType::kTH1F, {{1, 0, 1}}, false);
 
-    if (fConfigDoPairing) {
+    if (doprocessPairing) {
       registry.add<TH2>("ULS", "ULS", HistType::kTH2F, {mAxis, ptAxis}, true);
       registry.add<TH2>("LSpp", "LSpp", HistType::kTH2F, {mAxis, ptAxis}, true);
       registry.add<TH2>("LSmm", "LSmm", HistType::kTH2F, {mAxis, ptAxis}, true);
@@ -640,108 +665,6 @@ struct lmeelfcocktailaod {
     fpteevsmee_orig_wALT.push_back(registry.add<TH2>("pteevsmee_orig_wALT", "pteevsmee_orig_wALT", HistType::kTH2F, {mAxis, ptAxis}, true));
   }
 
-  PxPyPzEVector ApplyResolution(PxPyPzEVector vec, Char_t ch = 0, Int_t Run = 2)
-  {
-
-    Double_t theta, phi, pt, p, px, py, pz, E, mass, eta;
-    PxPyPzEVector resvec;
-
-    mass = 0.51099906e-3;
-    pt = vec.Pt();
-    p = vec.P();
-    theta = vec.Theta();
-    phi = vec.Phi();
-    eta = vec.Eta();
-
-    if (Run == 0) {
-      resvec = vec;
-    } else if (Run == 1) {
-      TH1D* hisSlice(nullptr);
-      if (fArr) {
-        TH2D* hDeltaPtvsPt = static_cast<TH2D*>(fArr->At(0));
-        // Get the momentum slice histogram for sampling of the smearing
-        // (in some input file versions this also contains a landau fit )
-        // since histogram bins start at 1, we can use the bin number directly for the array index (first slice stored in position 1).
-        Int_t histIndex = hDeltaPtvsPt->GetXaxis()->FindBin(pt);
-        if (histIndex < 1)
-          histIndex = 1; // in case some track is below the first p-bin (which currently starts at 100 MeV).
-        if (histIndex > fArr->GetLast()) {
-          histIndex = fArr->GetLast();
-        }
-        hisSlice = static_cast<TH1D*>(fArr->At(histIndex));
-      }
-      // get smear parameter via random selection from the p slices retreived from the deltaP/P plot
-      Double_t SmearingPPercent(0.);
-      if (hisSlice) {
-        SmearingPPercent = hisSlice->GetRandom();
-      } else {
-        SmearingPPercent = gRandom->Gaus(0, p * sqrt(0.004 * 0.004 + (0.012 * p) * (0.012 * p))) / p; // for B=0.5 Tesla
-      }
-
-      Double_t SmearingP = p * SmearingPPercent;
-      p -= SmearingP;
-      px = p * sin(theta) * cos(phi);
-      py = p * sin(theta) * sin(phi);
-      pz = p * cos(theta);
-      E = sqrt(p * p + mass * mass);
-
-      resvec.SetPxPyPzE(px, py, pz, E);
-
-    } else if (Run == 2) {
-      // smear pt
-      Int_t ptbin = reinterpret_cast<TH2D*>(fArrResoPt->At(0))->GetXaxis()->FindBin(pt);
-      if (ptbin < 1)
-        ptbin = 1;
-      if (ptbin > fArrResoPt->GetLast())
-        ptbin = fArrResoPt->GetLast();
-      Double_t smearing = 0.;
-      TH1D* thisHist = reinterpret_cast<TH1D*>(fArrResoPt->At(ptbin));
-      if (thisHist->GetEntries() > 0) {
-        smearing = thisHist->GetRandom() * pt;
-      }
-      Double_t sPt = pt - smearing;
-
-      // smear eta
-      ptbin = reinterpret_cast<TH2D*>(fArrResoEta->At(0))->GetXaxis()->FindBin(pt);
-      if (ptbin < 1)
-        ptbin = 1;
-      if (ptbin > fArrResoEta->GetLast())
-        ptbin = fArrResoEta->GetLast();
-      smearing = 0.;
-      thisHist = reinterpret_cast<TH1D*>(fArrResoEta->At(ptbin));
-      if (thisHist->GetEntries() > 0) {
-        smearing = thisHist->GetRandom();
-      }
-      Double_t sEta = eta - smearing;
-
-      // smear phi
-      ptbin = reinterpret_cast<TH2D*>(fArrResoPhi_Pos->At(0))->GetXaxis()->FindBin(pt);
-      if (ptbin < 1)
-        ptbin = 1;
-      if (ptbin > fArrResoPhi_Pos->GetLast())
-        ptbin = fArrResoPhi_Pos->GetLast();
-      smearing = 0.;
-      if (ch > 0) {
-        thisHist = reinterpret_cast<TH1D*>(fArrResoPhi_Pos->At(ptbin));
-      } else if (ch < 0) {
-        thisHist = reinterpret_cast<TH1D*>(fArrResoPhi_Neg->At(ptbin));
-      }
-      if (thisHist->GetEntries() > 0) {
-        smearing = thisHist->GetRandom();
-      }
-      Double_t sPhi = phi - smearing;
-
-      Double_t sPx = sPt * cos(sPhi);
-      Double_t sPy = sPt * sin(sPhi);
-      Double_t sPz = sPt * sinh(sEta);
-      Double_t sP = sPt * cosh(sEta);
-      Double_t sE = sqrt(sP * sP + mass * mass);
-
-      resvec.SetPxPyPzE(sPx, sPy, sPz, sE);
-    }
-
-    return resvec;
-  }
 
   void GetEffHisto(TString filename, TString histname)
   {
@@ -763,72 +686,16 @@ struct lmeelfcocktailaod {
     fFile->Close();
   }
 
-  void GetResHisto(TString filename, TString ptHistName, TString etaHistName, TString phiPosHistName, TString phiNegHistName)
+  void InitSmearer(TString filename, TString ptHistName, TString etaHistName, TString phiPosHistName, TString phiNegHistName)
   {
-    // get resolutoin histo
-    LOGP(info, "Set Resolution histo");
-    // Get Resolution map
-    TFile* fFile = TFile::Open(filename.Data());
-    if (!fFile) {
-      LOGP(error, "Could not open Resolution file {}", filename.Data());
-      return;
-    }
-    TObjArray* ArrResoPt = nullptr;
-    if (fFile->GetListOfKeys()->Contains(ptHistName.Data())) {
-      ArrResoPt = reinterpret_cast<TObjArray*>(fFile->Get(ptHistName.Data()));
-    } else {
-      LOGP(error, "Could not open {} from file {}", ptHistName.Data(), filename.Data());
-    }
-
-    TObjArray* ArrResoEta = nullptr;
-    if (fFile->GetListOfKeys()->Contains(etaHistName.Data())) {
-      ArrResoEta = reinterpret_cast<TObjArray*>(fFile->Get(etaHistName.Data()));
-    } else {
-      LOGP(error, "Could not open {} from file {}", etaHistName.Data(), filename.Data());
-    }
-
-    TObjArray* ArrResoPhi_Pos = nullptr;
-    if (fFile->GetListOfKeys()->Contains(phiPosHistName.Data())) {
-      ArrResoPhi_Pos = reinterpret_cast<TObjArray*>(fFile->Get(phiPosHistName.Data()));
-    } else {
-      LOGP(error, "Could not open {} from file {}", phiPosHistName.Data(), filename.Data());
-    }
-
-    TObjArray* ArrResoPhi_Neg = nullptr;
-    if (fFile->GetListOfKeys()->Contains(phiNegHistName.Data())) {
-      ArrResoPhi_Neg = reinterpret_cast<TObjArray*>(fFile->Get(phiNegHistName.Data()));
-    } else {
-      LOGP(error, "Could not open {} from file {}", phiNegHistName.Data(), filename.Data());
-    }
-    fArrResoPt = ArrResoPt;
-    fArrResoEta = ArrResoEta;
-    fArrResoPhi_Pos = ArrResoPhi_Pos;
-    fArrResoPhi_Neg = ArrResoPhi_Neg;
-    fFile->Close();
+    smearer.setResFileName(filename);
+    smearer.setResPtHistName(ptHistName);
+    smearer.setResEtaHistName(etaHistName);
+    smearer.setResPhiPosHistName(phiPosHistName);
+    smearer.setResPhiNegHistName(phiNegHistName);
+    smearer.init();
   }
 
-  void GetResHisto(TString filename, TString pHistName)
-  {
-    // get resolutoin histo
-    LOGP(info, "Set Resolution histo");
-    // Get Resolution map
-    TFile* fFile = TFile::Open(filename.Data());
-    if (!fFile) {
-      LOGP(error, "Could not open Resolution file {}", filename.Data());
-      LOGP(error, "No resolution array set! Using internal parametrization");
-      return;
-    }
-    TObjArray* ArrResoP = 0x0;
-    if (fFile->GetListOfKeys()->Contains(pHistName.Data())) {
-      ArrResoP = reinterpret_cast<TObjArray*>(fFile->Get(pHistName.Data()));
-    } else {
-      LOGP(error, "Could not open {} from file {}", pHistName.Data(), filename.Data());
-      LOGP(error, "No resolution array set! Using internal parametrization");
-    }
-
-    fArr = ArrResoP;
-    fFile->Close();
-  }
 
   void GetDCATemplates(TString filename, TString histname)
   {
@@ -939,14 +806,13 @@ struct lmeelfcocktailaod {
   {
     // Build Kroll-wada for virtual photon mass parametrization:
     Double_t KWmass = 0.;
-    Double_t emass = (TDatabasePDG::Instance()->GetParticle(11))->Mass();
     Int_t KWnbins = 10000;
-    Float_t KWmin = 2. * emass;
+    Float_t KWmin = 2. * eMass;
     Double_t KWbinwidth = (fConfigKWMax - KWmin) / (Double_t)KWnbins;
     fhKW = new TH1F("fhKW", "fhKW", KWnbins, KWmin, fConfigKWMax);
     for (Int_t ibin = 1; ibin <= KWnbins; ibin++) {
       KWmass = KWmin + (Double_t)(ibin - 1) * KWbinwidth + KWbinwidth / 2.0;
-      fhKW->AddBinContent(ibin, 2. * (1. / 137.03599911) / 3. / 3.14159265359 / KWmass * sqrt(1. - 4. * emass * emass / KWmass / KWmass) * (1. + 2. * emass * emass / KWmass / KWmass));
+      fhKW->AddBinContent(ibin, 2. * (1. / 137.03599911) / 3. / 3.14159265359 / KWmass * sqrt(1. - 4. * eMass * eMass / KWmass / KWmass) * (1. + 2. * eMass * eMass / KWmass / KWmass));
     }
   }
 
