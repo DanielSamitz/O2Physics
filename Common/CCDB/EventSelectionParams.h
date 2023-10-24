@@ -9,13 +9,13 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-#ifndef EventSelectionParams_H
-#define EventSelectionParams_H
+#ifndef COMMON_CCDB_EVENTSELECTIONPARAMS_H_
+#define COMMON_CCDB_EVENTSELECTIONPARAMS_H_
 
 #include <Rtypes.h>
 #include <TMath.h>
 
-namespace evsel
+namespace o2::aod::evsel
 {
 // Event selection criteria
 enum EventSelectionFlags {
@@ -58,21 +58,19 @@ enum EventSelectionFlags {
 
 extern const char* selectionLabels[kNsel];
 
-} // namespace evsel
-
-using namespace evsel;
+} // namespace o2::aod::evsel
 
 class EventSelectionParams
 {
  public:
-  EventSelectionParams(int system = 0, int run = 2);
+  explicit EventSelectionParams(int system = 0, int run = 2);
   void DisableOutOfBunchPileupCuts();
   void SetOnVsOfParams(float newV0MOnVsOfA, float newV0MOnVsOfB, float newSPDOnVsOfA, float newSPDOnVsOfB);
   bool* GetSelection(int iSelection);
 
-  bool selectionBarrel[kNsel];
-  bool selectionMuonWithPileupCuts[kNsel];
-  bool selectionMuonWithoutPileupCuts[kNsel];
+  bool selectionBarrel[o2::aod::evsel::kNsel];
+  bool selectionMuonWithPileupCuts[o2::aod::evsel::kNsel];
+  bool selectionMuonWithoutPileupCuts[o2::aod::evsel::kNsel];
 
   // time-of-flight offset
   float fV0ADist = 329.00 / TMath::Ccgs() * 1e9; // ns
@@ -114,10 +112,10 @@ class EventSelectionParams
   float fZNCBGlower = 5.0;   // ns
   float fZNCBGupper = 100.0; // ns
 
-  float fT0ABBlower = -1.0; // ns
-  float fT0ABBupper = 1.0;  // ns
-  float fT0CBBlower = -1.0; // ns
-  float fT0CBBupper = 1.0;  // ns
+  float fT0ABBlower = -2.0; // ns
+  float fT0ABBupper = 2.0;  // ns
+  float fT0CBBlower = -2.0; // ns
+  float fT0CBBupper = 2.0;  // ns
   float fT0ABGlower = 32.7; // ns
   float fT0ABGupper = 32.8; // ns
   float fT0CBGlower = 32.7; // ns
@@ -138,4 +136,4 @@ class EventSelectionParams
   ClassDefNV(EventSelectionParams, 3)
 };
 
-#endif
+#endif // COMMON_CCDB_EVENTSELECTIONPARAMS_H_
