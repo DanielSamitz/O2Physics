@@ -191,6 +191,36 @@ struct lmeelfcocktail {
     // get number of events per timeframe
     auto Nparts = pc.inputs().getNofParts(0);
 
+    for (auto ii = 0U; ii < Nparts; ++ii) {
+      registry.fill(HIST("NEvents"), 0.5);
+      // get the tracks
+      auto mctracks = pc.inputs().get<std::vector<o2::MCTrack>>("mctracks", ii);
+      for (auto& mctrack : mctracks) {
+        if (mctrack.GetPdgCode()!=111)
+          continue;
+        auto firstDaughterId = mctrack.getFirstDaughterTrackId();
+        auto lastDaughterId = mctrack.getLastDaughterTrackId();
+        if (firstDaughterId<0 || lastDaughterId<0)
+          continue;
+        bool has_e=false;
+        bool has_p=false;
+        for (int i=firstDaughterId; i <= lastDaughterId; i++){
+          auto const& daughter = mctracks[i];
+          if (daughter.GetPdgCode()==11)
+            has_e=true;
+          if (daughter.GetPdgCode()==-11)
+            has_p=true;
+        }
+        if (has_e && has_p)
+          continue;
+        std::cout << "======================================================" << std::endl;
+        for (int i=firstDaughterId; i <= lastDaughterId; i++){
+          auto const& daughter = mctracks[i];
+          std::cout << "Daughter = " << daughter.GetPdgCode() << std::endl;
+        }
+      }
+    }
+
     for (auto i = 0U; i < Nparts; ++i) {
       registry.fill(HIST("NEvents"), 0.5);
       // get the tracks
