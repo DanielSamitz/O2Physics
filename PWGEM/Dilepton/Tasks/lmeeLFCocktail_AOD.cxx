@@ -203,6 +203,7 @@ struct lmeelfcocktailaod {
       if (!mother.has_daughters())
         continue;
 
+
       bool isSelectedMother = false;
       int motherPdgCode = mother.pdgCode();
       if ( motherPdgCode == 111 || motherPdgCode == 221 || motherPdgCode == 331 || motherPdgCode == 113 || motherPdgCode == 223 || motherPdgCode == 333 || motherPdgCode == 443 )
@@ -216,12 +217,8 @@ struct lmeelfcocktailaod {
       bool has_p = false;
       PxPyPzEVector dau1, dau2, ee, ee_orig;
 
-      if (motherPdgCode != 111)
-        continue;
-      //std::cout << "======================================" << std::endl;
       for (auto& d : mother.daughters_as<aod::McParticles>()) {
         fdectyp++;
-        //std::cout << "Daughter" << fdectyp << " = " << d.pdgCode() << std::endl;
         if (d.pdgCode() == 11) {
           has_e = true;
           dau1.SetPxPyPzE(d.px(), d.py(), d.pz(), d.e());
@@ -233,17 +230,13 @@ struct lmeelfcocktailaod {
           fdau3pdg = d.pdgCode();
         }
       }
-      if ((!has_e) || (!has_p)){
-        std::cout << "========================================" << std::endl;
-        for (auto& d : mother.daughters_as<aod::McParticles>()) {
-          std::cout << "Daughter = " << d.pdgCode() << std::endl;
-        }
+      if ((!has_e) || (!has_p))
         continue;
-      }
 
       if (fdectyp > 4){
         continue; // here dectype==4 is included, but when filling histograms it is excluded?
       }
+
 
       /*
       // Not sure about this cut. From GammaConv group. Harmless a priori.
