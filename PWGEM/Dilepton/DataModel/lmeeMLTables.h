@@ -57,6 +57,23 @@ DECLARE_SOA_TABLE(EMPrimaryTracks, "AOD", "EMPTRACK", //!
 // iterators
 using EMPrimaryTrack = EMPrimaryTracks::iterator;
 
+namespace dielectronMlSelection
+{
+DECLARE_SOA_COLUMN(IsSelMlSingleTrack, isSelMlSingleTrack, bool);
+DECLARE_SOA_COLUMN(IsSelMlPair, isSelMlPair, bool);
+DECLARE_SOA_COLUMN(MlScoreSingleTrack, mlScoreSingleTrack, std::vector<float>);
+DECLARE_SOA_COLUMN(MlScorePair, mlScorePair, std::vector<float>);
+} // namespace dielectronMlSelection
+
+DECLARE_SOA_TABLE(dielectronMlSelectionSingleTrack, "AOD", "DIELEMLSELST", //!
+                  dielectronMlSelection::IsSelMlSingleTrack);
+DECLARE_SOA_TABLE(dielectronMlScoreSingleTrack, "AOD", "DIELEMLSCOREST", //!
+                  dielectronMlSelection::MlScoreSingleTrack);
+DECLARE_SOA_TABLE(dielectronMlSelectionPair, "AOD", "DIELEMLSELP", //!
+                  dielectronMlSelection::IsSelMlPair);
+DECLARE_SOA_TABLE(dielectronMlScorePair, "AOD", "DIELEMLSCOREP", //!
+                  dielectronMlSelection::MlScorePair);
+
 } // namespace o2::aod
 
 #endif // PWGEM_DILEPTON_DATAMODEL_LMEEMLTABLES_H_

@@ -20,38 +20,18 @@
 #include "PWGDQ/DataModel/ReducedInfoTables.h"
 #include "PWGEM/Dilepton/Utils/MlResponseDielectronSingleTrack.h"
 #include "PWGEM/Dilepton/Utils/MlResponseDielectronPair.h"
+#include "PWGEM/Dilepton/DataModel/lmeeMLTables.h"
 
 using namespace o2;
 using namespace o2::analysis;
 using namespace o2::framework;
 using namespace o2::aod;
 
-namespace o2::aod
-{
-
-namespace dielectronMlSelection
-{
-DECLARE_SOA_COLUMN(IsSelMlSingleTrack, isSelMlSingleTrack, bool);
-DECLARE_SOA_COLUMN(IsSelMlPair, isSelMlPair, bool);
-DECLARE_SOA_COLUMN(MlScoreSingleTrack, mlScoreSingleTrack, std::vector<float>);
-DECLARE_SOA_COLUMN(MlScorePair, mlScorePair, std::vector<float>);
-} // namespace dielectronMlSelection
-
-DECLARE_SOA_TABLE(dielectronMlSelectionSingleTrack, "AOD", "DIELEMLSELST", //!
-                  dielectronMlSelection::IsSelMlSingleTrack);
-DECLARE_SOA_TABLE(dielectronMlScoreSingleTrack, "AOD", "DIELEMLSCOREST", //!
-                  dielectronMlSelection::MlScoreSingleTrack);
-DECLARE_SOA_TABLE(dielectronMlSelectionPair, "AOD", "DIELEMLSELP", //!
-                  dielectronMlSelection::IsSelMlPair);
-DECLARE_SOA_TABLE(dielectronMlScorePair, "AOD", "DIELEMLSCOREP", //!
-                  dielectronMlSelection::MlScorePair);
-} // namespace o2::aod
-
-using MySkimmedTracks = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelCov>;
-using MySkimmedTracksWithPID = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelPID, aod::ReducedTracksBarrelCov>;
 using MyTracksWithPID = soa::Join<aod::Tracks, aod::TracksCov, aod::TracksExtra, aod::TracksDCA,
                                   aod::pidTPCFullEl, aod::pidTPCFullMu, aod::pidTPCFullPi, aod::pidTPCFullKa, aod::pidTPCFullPr,
                                   aod::pidTOFFullEl, aod::pidTOFFullMu, aod::pidTOFFullPi, aod::pidTOFFullKa, aod::pidTOFFullPr, aod::pidTOFbeta>;
+
+using MySkimmedTracks = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelCov>;
 
 // define some default values for single track analysis
 namespace dielectron_ml_cuts_single_track
@@ -161,7 +141,7 @@ struct DielectronMlSingleTrack {
 
   void init(InitContext&)
   {
-    if (doprocessSkimmedSingleTrack || doprocessAO2DSingleTrack) {
+    if (doprocessSingleTrack) {
       mlResponse.configure(binsPtMl, cutsMl, cutDirMl, nClassesMl);
       if (loadModelsFromCCDB) {
         ccdbApi.init(ccdbUrl);
@@ -241,17 +221,11 @@ struct DielectronMlSingleTrack {
     }
   }
 
-  void processSkimmedSingleTrack(MySkimmedTracksWithPID const& tracks)
+  void processSingleTrack(MyTracksWithPID const& tracks)
   {
     runSingleTracks(tracks);
   }
-  PROCESS_SWITCH(DielectronMlSingleTrack, processSkimmedSingleTrack, "Apply ML selection on skimmed output on single tracks", true);
-
-  void processAO2DSingleTrack(MyTracksWithPID const& tracks)
-  {
-    runSingleTracks(tracks);
-  }
-  PROCESS_SWITCH(DielectronMlSingleTrack, processAO2DSingleTrack, "Apply ML selection on skimmed output on single tracks", false);
+  PROCESS_SWITCH(DielectronMlSingleTrack, processSingleTrack, "Apply ML selection on skimmed output on single tracks", false);
 
   void processDummy(DielectronsExtra const&)
   {
@@ -340,17 +314,11 @@ struct DielectronMlPair {
   }
   PROCESS_SWITCH(DielectronMlPair, processPair, "Apply ML selection at pair level", false);
 
-  void processDummyAO2D(MyTracksWithPID const&)
+  void processDummy(MyTracksWithPID const&)
   {
     // dummy
   }
-  PROCESS_SWITCH(DielectronMlPair, processDummyAO2D, "Dummy", false);
-
-  void processDummySkimmed(MySkimmedTracks const&)
-  {
-    // dummy
-  }
-  PROCESS_SWITCH(DielectronMlPair, processDummySkimmed, "Dummy", true);
+  PROCESS_SWITCH(DielectronMlPair, processDummy, "Dummy", true);
 };
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
