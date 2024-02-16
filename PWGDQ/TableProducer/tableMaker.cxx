@@ -146,24 +146,33 @@ struct TableMaker {
   OutputObj<TList> fStatsList{"Statistics"};  //! skimming statistics
   HistogramManager* fHistMan;
 
-  Configurable<std::string> fConfigEventCuts{"cfgEventCuts", "eventStandard", "Event selection"};
-  Configurable<std::string> fConfigTrackCuts{"cfgBarrelTrackCuts", "jpsiO2MCdebugCuts2", "Comma separated list of barrel track cuts"};
-  Configurable<std::string> fConfigMuonCuts{"cfgMuonCuts", "muonQualityCuts", "Comma separated list of muon cuts"};
-  Configurable<std::string> fConfigAddEventHistogram{"cfgAddEventHistogram", "", "Comma separated list of histograms"};
-  Configurable<std::string> fConfigAddTrackHistogram{"cfgAddTrackHistogram", "", "Comma separated list of histograms"};
-  Configurable<std::string> fConfigAddMuonHistogram{"cfgAddMuonHistogram", "", "Comma separated list of histograms"};
-  Configurable<float> fConfigBarrelTrackPtLow{"cfgBarrelLowPt", 1.0f, "Low pt cut for tracks in the barrel"};
-  Configurable<float> fConfigBarrelTrackMaxAbsEta{"cfgBarrelMaxAbsEta", 0.9f, "Eta absolute value cut for tracks in the barrel"};
-  Configurable<float> fConfigMuonPtLow{"cfgMuonLowPt", 1.0f, "Low pt cut for muons"};
-  Configurable<float> fConfigMinTpcSignal{"cfgMinTpcSignal", 30.0, "Minimum TPC signal"};
-  Configurable<float> fConfigMaxTpcSignal{"cfgMaxTpcSignal", 300.0, "Maximum TPC signal"};
+  struct : ConfigurableGroup {
+    Configurable<std::string> fConfigEventCuts{"cfgEventCuts", "eventStandard", "Event selection"};
+    Configurable<std::string> fConfigAddEventHistogram{"cfgAddEventHistogram", "", "Comma separated list of histograms"};
+  } eventConfigs;
+  struct : ConfigurableGroup {
+    Configurable<std::string> fConfigTrackCuts{"cfgBarrelTrackCuts", "jpsiO2MCdebugCuts2", "Comma separated list of barrel track cuts"};
+    Configurable<std::string> fConfigAddTrackHistogram{"cfgAddTrackHistogram", "", "Comma separated list of histograms"};
+    Configurable<float> fConfigBarrelTrackPtLow{"cfgBarrelLowPt", 1.0f, "Low pt cut for tracks in the barrel"};
+    Configurable<float> fConfigBarrelTrackMaxAbsEta{"cfgBarrelMaxAbsEta", 0.9f, "Eta absolute value cut for tracks in the barrel"};
+    Configurable<float> fConfigMinTpcSignal{"cfgMinTpcSignal", 30.0, "Minimum TPC signal"};
+    Configurable<float> fConfigMaxTpcSignal{"cfgMaxTpcSignal", 300.0, "Maximum TPC signal"};
+  } trackConfigs;
+  struct : ConfigurableGroup {
+    Configurable<std::string> fConfigMuonCuts{"cfgMuonCuts", "muonQualityCuts", "Comma separated list of muon cuts"};
+    Configurable<std::string> fConfigAddMuonHistogram{"cfgAddMuonHistogram", "", "Comma separated list of histograms"};
+    Configurable<float> fConfigMuonPtLow{"cfgMuonLowPt", 1.0f, "Low pt cut for muons"};
+    Configurable<bool> fPropMuon{"cfgPropMuon", false, "Propgate muon tracks through absorber"};
+  } muonConfigs;
   Configurable<bool> fConfigQA{"cfgQA", false, "If true, fill QA histograms"};
   Configurable<bool> fConfigDetailedQA{"cfgDetailedQA", false, "If true, include more QA histograms (BeforeCuts classes)"};
   Configurable<bool> fIsRun2{"cfgIsRun2", false, "Whether we analyze Run-2 or Run-3 data"};
   Configurable<bool> fIsAmbiguous{"cfgIsAmbiguous", false, "Whether we enable QA plots for ambiguous tracks"};
-  Configurable<string> fConfigCcdbUrl{"ccdb-url", "http://alice-ccdb.cern.ch", "url of the ccdb repository"};
-  Configurable<string> fConfigCcdbPathTPC{"ccdb-path-tpc", "Users/z/zhxiong/Postcalib/pass4/apass3BB", "base path to the ccdb object"};
-  Configurable<int64_t> fConfigNoLaterThan{"ccdb-no-later-than", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count(), "latest acceptable timestamp of creation for the object"};
+  struct : ConfigurableGroup {
+    Configurable<string> fConfigCcdbUrl{"ccdb-url", "http://alice-ccdb.cern.ch", "url of the ccdb repository"};
+    Configurable<string> fConfigCcdbPathTPC{"ccdb-path-tpc", "Users/z/zhxiong/Postcalib/pass4/apass3BB", "base path to the ccdb object"};
+    Configurable<int64_t> fConfigNoLaterThan{"ccdb-no-later-than", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count(), "latest acceptable timestamp of creation for the object"};
+  } ccdbConfigs;
   Configurable<bool> fConfigComputeTPCpostCalib{"cfgTPCpostCalib", false, "If true, compute TPC post-calibrated n-sigmas(electrons, pions, protons)"};
   Configurable<bool> fConfigComputeTPCpostCalibKaon{"cfgTPCpostCalibKaon", false, "If true, compute TPC post-calibrated n-sigmas for kaons"};
   Configurable<std::string> fConfigRunPeriods{"cfgRunPeriods", "LHC22f", "run periods for used data"};
@@ -171,7 +180,6 @@ struct TableMaker {
   Configurable<bool> fConfigSaveElectronSample{"cfgSaveElectronSample", false, "If true, only save electron sample"};
   Configurable<bool> fConfigDummyRunlist{"cfgDummyRunlist", false, "If true, use dummy runlist"};
   Configurable<int> fConfigInitRunNumber{"cfgInitRunNumber", 543215, "Initial run number used in run by run checks"};
-  Configurable<bool> fPropMuon{"cfgPropMuon", false, "Propgate muon tracks through absorber"};
   Configurable<std::string> geoPath{"geoPath", "GLO/Config/GeometryAligned", "Path of the geometry file"};
   Configurable<std::string> grpmagPath{"grpmagPath", "GLO/Config/GRPMagField", "CCDB path of the GRPMagField object"};
   Configurable<std::string> grpmagPathRun2{"grpmagPathRun2", "GLO/GRP/GRP", "CCDB path of the GRPObject (Usage for Run 2)"};
@@ -194,17 +202,17 @@ struct TableMaker {
   int fCurrentRun;            // needed to detect if the run changed and trigger update of calibrations etc.
 
   // TODO: filter on TPC dedx used temporarily until electron PID will be improved
-  Filter barrelSelectedTracks = ifnode(fIsRun2.node() == true, aod::track::trackType == uint8_t(aod::track::Run2Track), aod::track::trackType == uint8_t(aod::track::Track)) && o2::aod::track::pt >= fConfigBarrelTrackPtLow && nabs(o2::aod::track::eta) <= fConfigBarrelTrackMaxAbsEta && o2::aod::track::tpcSignal >= fConfigMinTpcSignal && o2::aod::track::tpcSignal <= fConfigMaxTpcSignal && o2::aod::track::tpcChi2NCl < 4.0f && o2::aod::track::itsChi2NCl < 36.0f;
+  Filter barrelSelectedTracks = ifnode(fIsRun2.node() == true, aod::track::trackType == uint8_t(aod::track::Run2Track), aod::track::trackType == uint8_t(aod::track::Track)) && o2::aod::track::pt >= trackConfigs.fConfigBarrelTrackPtLow && nabs(o2::aod::track::eta) <= trackConfigs.fConfigBarrelTrackMaxAbsEta && o2::aod::track::tpcSignal >= trackConfigs.fConfigMinTpcSignal && o2::aod::track::tpcSignal <= trackConfigs.fConfigMaxTpcSignal && o2::aod::track::tpcChi2NCl < 4.0f && o2::aod::track::itsChi2NCl < 36.0f;
 
-  Filter muonFilter = o2::aod::fwdtrack::pt >= fConfigMuonPtLow;
+  Filter muonFilter = o2::aod::fwdtrack::pt >= muonConfigs.fConfigMuonPtLow;
 
   void init(o2::framework::InitContext& context)
   {
     DefineCuts();
-    fCCDB->setURL(fConfigCcdbUrl);
+    fCCDB->setURL(ccdbConfigs.fConfigCcdbUrl);
     fCCDB->setCaching(true);
     fCCDB->setLocalObjectValidityChecking();
-    if (fPropMuon) {
+    if (muonConfigs.fPropMuon) {
       if (!o2::base::GeometryManager::isGeometryLoaded()) {
         fCCDB->get<TGeoManager>(geoPath);
       }
@@ -303,11 +311,11 @@ struct TableMaker {
 
     // CCDB configuration
     if (fConfigComputeTPCpostCalib) {
-      fCCDB->setURL(fConfigCcdbUrl.value);
+      fCCDB->setURL(ccdbConfigs.fConfigCcdbUrl.value);
       fCCDB->setCaching(true);
       fCCDB->setLocalObjectValidityChecking();
       // Not later than now objects
-      fCCDB->setCreatedNotAfter(fConfigNoLaterThan.value);
+      fCCDB->setCreatedNotAfter(ccdbConfigs.fConfigNoLaterThan.value);
     }
   }
 
@@ -315,11 +323,11 @@ struct TableMaker {
   {
     // Event cuts
     fEventCut = new AnalysisCompositeCut(true);
-    TString eventCutStr = fConfigEventCuts.value;
+    TString eventCutStr = eventConfigs.fConfigEventCuts.value;
     fEventCut->AddCut(dqcuts::GetAnalysisCut(eventCutStr.Data()));
 
     // Barrel track cuts
-    TString cutNamesStr = fConfigTrackCuts.value;
+    TString cutNamesStr = trackConfigs.fConfigTrackCuts.value;
     if (!cutNamesStr.IsNull()) {
       std::unique_ptr<TObjArray> objArray(cutNamesStr.Tokenize(","));
       for (int icut = 0; icut < objArray->GetEntries(); ++icut) {
@@ -328,7 +336,7 @@ struct TableMaker {
     }
 
     // Muon cuts
-    cutNamesStr = fConfigMuonCuts.value;
+    cutNamesStr = muonConfigs.fConfigMuonCuts.value;
     if (!cutNamesStr.IsNull()) {
       std::unique_ptr<TObjArray> objArray(cutNamesStr.Tokenize(","));
       for (int icut = 0; icut < objArray->GetEntries(); ++icut) {
@@ -346,7 +354,7 @@ struct TableMaker {
     auto bc = collision.template bc_as<aod::BCsWithTimestamps>();
     if (fCurrentRun != bc.runNumber()) {
       if (fConfigComputeTPCpostCalib) {
-        auto calibList = fCCDB->getForTimeStamp<TList>(fConfigCcdbPathTPC.value, bc.timestamp());
+        auto calibList = fCCDB->getForTimeStamp<TList>(ccdbConfigs.fConfigCcdbPathTPC.value, bc.timestamp());
         VarManager::SetCalibrationObject(VarManager::kTPCElectronMean, calibList->FindObject("mean_map_electron"));
         VarManager::SetCalibrationObject(VarManager::kTPCElectronSigma, calibList->FindObject("sigma_map_electron"));
         VarManager::SetCalibrationObject(VarManager::kTPCPionMean, calibList->FindObject("mean_map_pion"));
@@ -368,7 +376,7 @@ struct TableMaker {
         if (grpmag != nullptr) {
           o2::base::Propagator::initFieldFromGRP(grpmag);
         }
-        if (fPropMuon) {
+        if (muonConfigs.fPropMuon) {
           VarManager::SetupMuonMagField();
         }
       }
@@ -626,7 +634,7 @@ struct TableMaker {
       for (auto& muon : tracksMuon) {
         trackFilteringTag = uint64_t(0);
         VarManager::FillTrack<TMuonFillMap>(muon);
-        if (fPropMuon) {
+        if (muonConfigs.fPropMuon) {
           VarManager::FillPropagateMuon<TMuonFillMap>(muon, collision);
         }
 
@@ -666,7 +674,7 @@ struct TableMaker {
         trackTempFilterMap = uint8_t(0);
 
         VarManager::FillTrack<TMuonFillMap>(muon);
-        if (fPropMuon) {
+        if (muonConfigs.fPropMuon) {
           VarManager::FillPropagateMuon<TMuonFillMap>(muon, collision);
         }
         if (fDoDetailedQA) {
@@ -753,7 +761,7 @@ struct TableMaker {
     auto bc = collision.template bc_as<aod::BCsWithTimestamps>();
     if (fCurrentRun != bc.runNumber()) {
       if (fConfigComputeTPCpostCalib) {
-        auto calibList = fCCDB->getForTimeStamp<TList>(fConfigCcdbPathTPC.value, bc.timestamp());
+        auto calibList = fCCDB->getForTimeStamp<TList>(ccdbConfigs.fConfigCcdbPathTPC.value, bc.timestamp());
         VarManager::SetCalibrationObject(VarManager::kTPCElectronMean, calibList->FindObject("mean_map_electron"));
         VarManager::SetCalibrationObject(VarManager::kTPCElectronSigma, calibList->FindObject("sigma_map_electron"));
         VarManager::SetCalibrationObject(VarManager::kTPCPionMean, calibList->FindObject("mean_map_pion"));
@@ -775,7 +783,7 @@ struct TableMaker {
         if (grpmag != nullptr) {
           o2::base::Propagator::initFieldFromGRP(grpmag);
         }
-        if (fPropMuon) {
+        if (muonConfigs.fPropMuon) {
           VarManager::SetupMuonMagField();
         }
       }
@@ -1015,7 +1023,7 @@ struct TableMaker {
         trackTempFilterMap = uint8_t(0);
 
         VarManager::FillTrack<TMuonFillMap>(muon);
-        if (fPropMuon) {
+        if (muonConfigs.fPropMuon) {
           VarManager::FillPropagateMuon<TMuonFillMap>(muon, collision);
         }
         if (fDoDetailedQA) {
@@ -1103,28 +1111,28 @@ struct TableMaker {
         }
       }
 
-      TString histEventName = fConfigAddEventHistogram.value;
+      TString histEventName = eventConfigs.fConfigAddEventHistogram.value;
       if (classStr.Contains("Event")) {
         if (fConfigQA) {
           dqhistograms::DefineHistograms(fHistMan, objArray->At(iclass)->GetName(), "event", histEventName);
         }
       }
 
-      TString histTrackName = fConfigAddTrackHistogram.value;
+      TString histTrackName = trackConfigs.fConfigAddTrackHistogram.value;
       if (classStr.Contains("Track")) {
         if (fConfigQA) {
           dqhistograms::DefineHistograms(fHistMan, objArray->At(iclass)->GetName(), "track", histTrackName);
         }
       }
 
-      TString histMuonName = fConfigAddMuonHistogram.value;
+      TString histMuonName = muonConfigs.fConfigAddMuonHistogram.value;
       if (classStr.Contains("Muons")) {
         if (fConfigQA) {
           dqhistograms::DefineHistograms(fHistMan, objArray->At(iclass)->GetName(), "track", histMuonName);
         }
       }
 
-      TString histMftName = fConfigAddMuonHistogram.value;
+      TString histMftName = muonConfigs.fConfigAddMuonHistogram.value;
       if (classStr.Contains("Mft")) {
         if (fConfigDetailedQA) {
           dqhistograms::DefineHistograms(fHistMan, objArray->At(iclass)->GetName(), "track", histMftName);
