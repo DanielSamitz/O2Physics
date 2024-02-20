@@ -236,6 +236,8 @@ struct AnalysisTrackSelection {
 
   int fCurrentRun; // needed to detect if the run changed and trigger update of calibrations etc.
 
+  Filter mlTrackFilter = o2::aod::dqMlSelection::isSelMlTrack == true;
+
   void init(o2::framework::InitContext&)
   {
     fCurrentRun = 0;
@@ -339,7 +341,15 @@ struct AnalysisTrackSelection {
   {
     runTrackSelection<gkEventFillMap, gkTrackFillMap>(event, tracks);
   }
+  void processSkimmedWithMl(MyEventsVtxCov::iterator const& event, soa::Filtered<soa::Join<MyBarrelTracks, aod::dqMlSelTrack>> const& tracks)
+  {
+    runTrackSelection<gkEventFillMap, gkTrackFillMap>(event, tracks);
+  }
   void processSkimmedWithCov(MyEventsVtxCov::iterator const& event, MyBarrelTracksWithCov const& tracks)
+  {
+    runTrackSelection<gkEventFillMapWithCov, gkTrackFillMapWithCov>(event, tracks);
+  }
+  void processSkimmedWithCovAndMl(MyEventsVtxCov::iterator const& event, soa::Filtered<soa::Join<MyBarrelTracksWithCov, aod::dqMlSelTrack>> const& tracks)
   {
     runTrackSelection<gkEventFillMapWithCov, gkTrackFillMapWithCov>(event, tracks);
   }
@@ -349,7 +359,9 @@ struct AnalysisTrackSelection {
   }
 
   PROCESS_SWITCH(AnalysisTrackSelection, processSkimmed, "Run barrel track selection on DQ skimmed tracks", false);
+  PROCESS_SWITCH(AnalysisTrackSelection, processSkimmedWithMl, "Run barrel track selection on DQ skimmed tracks with ML filter", false);
   PROCESS_SWITCH(AnalysisTrackSelection, processSkimmedWithCov, "Run barrel track selection on DQ skimmed tracks w/ cov matrix", false);
+  PROCESS_SWITCH(AnalysisTrackSelection, processSkimmedWithCovAndMl, "Run barrel track selection on DQ skimmed tracks w/ cov matrix and ML filter", false);
   PROCESS_SWITCH(AnalysisTrackSelection, processDummy, "Dummy function", false);
 };
 

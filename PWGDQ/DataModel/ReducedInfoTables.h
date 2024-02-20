@@ -751,6 +751,24 @@ DECLARE_SOA_TABLE(RedDleptDmesAll, "AOD", "RTDILPTDMESALL", //!
                   jpsidmescorr::BdtBkg,
                   jpsidmescorr::BdtPrompt,
                   jpsidmescorr::BdtNonprompt);
+
+namespace dqMlSelection
+{
+DECLARE_SOA_COLUMN(IsSelMlTrack, isSelMlTrack, bool);
+DECLARE_SOA_COLUMN(IsSelMlMuon, isSelMlMuon, bool);
+DECLARE_SOA_COLUMN(IsSelMlDielectron, isSelMlDielectron, bool);
+DECLARE_SOA_COLUMN(IsSelMlDimuon, isSelMlDimuon, bool);
+}
+
+DECLARE_SOA_TABLE(dqMlSelTrack, "AOD", "DQMLSELTRACK", //!
+                 dqMlSelection::IsSelMlTrack);
+DECLARE_SOA_TABLE(dqMlSelMuon, "AOD", "DQMLSELMUON", //!
+                 dqMlSelection::IsSelMlMuon);
+DECLARE_SOA_TABLE(dqMlSelDielectron, "AOD", "DQMLSELDIELE", //!
+                 dqMlSelection::IsSelMlDielectron);
+DECLARE_SOA_TABLE(dqMlSelDimuon, "AOD", "DQMLSELDIMUON", //!
+                 dqMlSelection::IsSelMlDimuon);
+
 } // namespace o2::aod
 
 #endif // PWGDQ_DATAMODEL_REDUCEDINFOTABLES_H_
