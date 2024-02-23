@@ -113,7 +113,11 @@ class VarManager : public TObject
     TrackTPCPID = BIT(22),
     TrackMFT = BIT(23),
     ReducedTrackCollInfo = BIT(24), // TODO: remove it once new reduced data tables are produced for dielectron with ReducedTracksBarrelInfo
-    ReducedMuonCollInfo = BIT(25)   // TODO: remove it once new reduced data tables are produced for dielectron with ReducedTracksBarrelInfo
+    ReducedMuonCollInfo = BIT(25),  // TODO: remove it once new reduced data tables are produced for dielectron with ReducedTracksBarrelInfo
+    MlSelTrack = BIT(26),
+    MlSelMuon = BIT(27),
+    MlSelDielectron = BIT(28),
+    MlSelDimuon = BIT(29)
   };
 
   enum PairCandidateType {
@@ -342,6 +346,7 @@ class VarManager : public TObject
     kIsDalitzLeg,             // Up to 8 dalitz selections
     kBarrelNAssocsInBunch,    // number of in bunch collision associations
     kBarrelNAssocsOutOfBunch, // number of out of bunch collision associations
+    kIsSelMlTrack,
     kNBarrelTrackVariables = kIsDalitzLeg + 8,
 
     // Muon track variables
@@ -376,6 +381,7 @@ class VarManager : public TObject
     kMftNClusters,
     kMftClusterSize,
     kMftMeanClusterSize,
+    kIsSelMlMuon,
     kNMuonTrackVariables,
 
     // MC particle variables
@@ -461,6 +467,8 @@ class VarManager : public TObject
     kKFChi2OverNDFGeo,
     kKFNContributorsPV,
     kKFCosPA,
+    kIsSelMlDielectron,
+    kIsSelMlDimuon,
     kNPairVariables,
 
     // Candidate-track correlation variables
@@ -1517,6 +1525,14 @@ void VarManager::FillTrack(T const& track, float* values)
     values[kTOFbeta] = track.beta();
   }
 
+  // ML selection
+  if constexpr ((fillMap & MlSelTrack) > 0) {
+    values[kIsSelMlTrack] = track.isSelMlTrack();
+  }
+  if constexpr ((fillMap & MlSelMuon) > 0) {
+    values[kIsSelMlMuon] = track.isSelMlMuon();
+  }
+
   // Quantities based on the muon extra table
   if constexpr ((fillMap & ReducedMuonExtra) > 0 || (fillMap & Muon) > 0) {
     values[kMuonNClusters] = track.nClusters();
@@ -1863,6 +1879,14 @@ void VarManager::FillPair(T1 const& t1, T2 const& t2, float* values)
     // by construction, (wx,wy,wz) must be a unit vector. Measure angle between (wx,wy,wz) and (ax,ay,0).
     // The angle between them should be small if the pair is conversion. This function then returns values close to pi!
     values[kPairPhiv] = TMath::ACos(wx * ax + wy * ay); // phiv in [0,pi] //cosPhiV = wx * ax + wy * ay;
+  }
+
+  // ML selection
+  if constexpr ((fillMap & MlSelDielectron) > 0) {
+    values[kIsSelMlDielectron] = t1.isSelMlDielectron()[t2.pairPosition() - t1.pairPosition() - 1];
+  }
+  if constexpr ((fillMap & MlSelDimuon) > 0) {
+    values[kIsSelMlDimuon] = t1.isSelMlDimuon()[t2.pairPosition() - t1.pairPosition() - 1];
   }
 }
 

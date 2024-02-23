@@ -1849,6 +1849,11 @@ AnalysisCompositeCut* o2::aod::dqcuts::GetCompositeCut(const char* cutName)
     return cut;
   }
 
+  if (!nameStr.compare("MlSelTrack")) {
+    cut->AddCut(GetAnalysisCut("mlSelTrack"));
+    return cut;
+  }
+
   // -------------------------------------------------------------------------------------------------
   // lmee pair cuts
 
@@ -2069,6 +2074,11 @@ AnalysisCompositeCut* o2::aod::dqcuts::GetCompositeCut(const char* cutName)
 
   if (!nameStr.compare("Chi2MCHMFTCut4")) {
     cut->AddCut(GetAnalysisCut("Chi2MCHMFTCut4"));
+    return cut;
+  }
+
+  if (!nameStr.compare("MlSelMuon")) {
+    cut->AddCut(GetAnalysisCut("mlSelMuon"));
     return cut;
   }
 
@@ -2363,6 +2373,16 @@ AnalysisCompositeCut* o2::aod::dqcuts::GetCompositeCut(const char* cutName)
 
   if (!nameStr.compare("pairCoherentRho0")) {
     cut->AddCut(GetAnalysisCut("pairPtLow3"));
+    return cut;
+  }
+
+  if (!nameStr.compare("MlSelDielectron")) {
+    cut->AddCut(GetAnalysisCut("mlSelDielectron"));
+    return cut;
+  }
+
+  if (!nameStr.compare("MlSelDimuon")) {
+    cut->AddCut(GetAnalysisCut("mlSelDimuon"));
     return cut;
   }
 
@@ -3875,6 +3895,11 @@ AnalysisCut* o2::aod::dqcuts::GetAnalysisCut(const char* cutName)
     }
   }
 
+  if (!nameStr.compare("mlSelTrack")) {
+    cut->AddCut(VarManager::kIsSelMlTrack, 0.5, 1.5);
+    return cut;
+  }
+
   // -------------------------------------------------------------------------------------------------
   // Muon cuts
   if (!nameStr.compare("GlobalMuonTrack")) {
@@ -4041,6 +4066,11 @@ AnalysisCut* o2::aod::dqcuts::GetAnalysisCut(const char* cutName)
 
   if (!nameStr.compare("Chi2MCHMFTCut4")) {
     cut->AddCut(VarManager::kMuonChi2MatchMCHMFT, 0, 60);
+    return cut;
+  }
+
+  if (!nameStr.compare("mlSelMlMuon")) {
+    cut->AddCut(VarManager::kIsSelMlMuon, 0.5, 1.5);
     return cut;
   }
 
@@ -4385,6 +4415,16 @@ AnalysisCut* o2::aod::dqcuts::GetAnalysisCut(const char* cutName)
 
   if (!nameStr.compare("excludePairLowMass")) {
     cut->AddCut(VarManager::kMass, 0., 0.1, true);
+    return cut;
+  }
+
+  if (!nameStr.compare("mlSelDielectron")) {
+    cut->AddCut(VarManager::kIsSelMlDielectron, 0.5, 1.5);
+    return cut;
+  }
+
+  if (!nameStr.compare("mlSelDimuon")) {
+    cut->AddCut(VarManager::kIsSelMlDimuon, 0.5, 1.5);
     return cut;
   }
 

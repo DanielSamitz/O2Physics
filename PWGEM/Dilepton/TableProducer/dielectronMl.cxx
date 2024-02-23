@@ -18,6 +18,7 @@
 #include "Framework/runDataProcessing.h"
 #include "Common/DataModel/TrackSelectionTables.h"
 #include "PWGDQ/DataModel/ReducedInfoTables.h"
+#include "PWGDQ/DataModel/SelectionTables.h"
 #include "PWGEM/Dilepton/Utils/MlResponseDielectronSingleTrack.h"
 #include "PWGEM/Dilepton/Utils/MlResponseDielectronPair.h"
 
@@ -26,26 +27,13 @@ using namespace o2::analysis;
 using namespace o2::framework;
 using namespace o2::aod;
 
-namespace o2::aod
-{
-
-namespace dielectronMlScore
-{
-DECLARE_SOA_COLUMN(MlScoreSingleTrack, mlScoreSingleTrack, std::vector<float>);
-DECLARE_SOA_COLUMN(MlScorePair, mlScorePair, std::vector<float>);
-}
-
-DECLARE_SOA_TABLE(dielectronMlScoreSingleTrack, "AOD", "DIELEMLSCOREST", //!
-                  dielectronMlScore::MlScoreSingleTrack);
-DECLARE_SOA_TABLE(dielectronMlScorePair, "AOD", "DIELEMLSCOREP", //!
-                  dielectronMlScore::MlScorePair);
-} // namespace o2::aod
-
 using MySkimmedTracks = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelCov>;
 using MySkimmedTracksWithPID = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelPID, aod::ReducedTracksBarrelCov>;
 using MyTracksWithPID = soa::Join<aod::Tracks, aod::TracksCov, aod::TracksExtra, aod::TracksDCA,
                                   aod::pidTPCFullEl, aod::pidTPCFullMu, aod::pidTPCFullPi, aod::pidTPCFullKa, aod::pidTPCFullPr,
                                   aod::pidTOFFullEl, aod::pidTOFFullMu, aod::pidTOFFullPi, aod::pidTOFFullKa, aod::pidTOFFullPr, aod::pidTOFbeta>;
+using MyEventsSelected = soa::Join<aod::ReducedEvents, aod::ReducedEventsExtended, aod::EventCuts>;
+using MyBarrelTracksSelectedWithCov = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelCov, aod::ReducedTracksBarrelPID, aod::BarrelTrackCuts>;
 
 // define some default values for single track analysis
 namespace dielectron_ml_cuts_single_track
@@ -125,7 +113,6 @@ static const std::vector<std::string> labelsCutScore = {"Signal", "Background"};
 
 struct DielectronMlSingleTrack {
   Produces<aod::dqMlSelTrack> singleTrackSelection;
-  Produces<aod::dielectronMlScoreSingleTrack> singleTrackScore;
 
   // ML inference
   Configurable<std::vector<double>> binsPtMl{"binsPtMl", std::vector<double>{dielectron_ml_cuts_single_track::vecBinsPt}, "pT bin limits for ML application"};
@@ -139,12 +126,11 @@ struct DielectronMlSingleTrack {
   Configurable<std::vector<std::string>> onnxFileNames{"onnxFileNames", std::vector<std::string>{""}, "ONNX file names for each pT bin (if not from CCDB full path)"};
   Configurable<int64_t> timestampCCDB{"timestampCCDB", -1, "timestamp of the ONNX file for ML model used to query in CCDB"};
   Configurable<bool> loadModelsFromCCDB{"loadModelsFromCCDB", false, "Flag to enable or disable the loading of models from CCDB"};
-  // preselection cuts (from treeCreatorElectronMl.cxx)
+  // quality cuts (from treeCreatorElectronMl.cxx)
+  Configurable<bool> doQualityCuts{"doQualityCuts", false, "enable track quality cuts"};
   Configurable<int> mincrossedrows{"mincrossedrows", 70, "min. crossed rows"};
   Configurable<float> maxchi2tpc{"maxchi2tpc", 4.0, "max. chi2/NclsTPC"};
   Configurable<float> maxeta{"maxeta", 0.9, "eta acceptance"};
-  // table output
-  Configurable<bool> fillScoreTable{"fillScoreTable", false, "fill table with scores from ML model"};
 
   o2::analysis::MlResponseDielectronSingleTrack<float> mlResponse;
   o2::ccdb::CcdbApi ccdbApi;
@@ -173,11 +159,14 @@ struct DielectronMlSingleTrack {
         hModelScore.push_back(registry.add<TH1>("hMlScore" + TString(cutsMl->getLabelsCols()[classMl]), "Model score distribution;Model score;counts", HistType::kTH1F, {axisScore}));
         hModelScoreVsPt.push_back(registry.add<TH2>("hMlScore" + TString(cutsMl->getLabelsCols()[classMl]) + "VsPt", "Model score distribution;Model score;counts", HistType::kTH2F, {axisScore, axisBinsPt}));
       }
+
+      registry.add("hMlSelection", "ML selection status;counts", {HistType::kTH1F, {{2, -0.5, 1.5}}});
+      registry.add("hMlSelectionVsPt", "ML selection status;counts", {HistType::kTH2F, {{2, -0.5, 1.5}, axisBinsPt}});
     }
   }
 
   template <typename T>
-  bool applyPreSelectionCuts(T const& track)
+  bool applyQualityCuts(T const& track)
   {
     // consistent with treeCreatorElectronMl.cxx
     if (!track.hasITS()) {
@@ -211,15 +200,13 @@ struct DielectronMlSingleTrack {
   void runSingleTracks(T const& tracks)
   {
     for (const auto& track : tracks) {
-      if (!applyPreSelectionCuts(track)) {
+      auto pt = track.pt();
+      if (doQualityCuts && !applyQualityCuts(track)) {
         singleTrackSelection(false);
-        if (fillScoreTable) {
-          std::vector<float> outputMl(nClassesMl, -1);
-          singleTrackScore(outputMl);
-        }
+        registry.fill(HIST("hMlSelection"), 0);
+        registry.fill(HIST("hMlSelectionVsPt"), 0, pt);
         continue;
       }
-      auto pt = track.pt();
       std::vector<float> inputFeatures = mlResponse.getInputFeatures(track);
       std::vector<float> outputMl = {};
 
@@ -229,9 +216,8 @@ struct DielectronMlSingleTrack {
         hModelScoreVsPt[classMl]->Fill(outputMl[classMl], pt);
       }
       singleTrackSelection(isSelected);
-      if (fillScoreTable) {
-        singleTrackScore(outputMl);
-      }
+      registry.fill(HIST("hMlSelection"), isSelected);
+      registry.fill(HIST("hMlSelectionVsPt"), isSelected, pt);
     }
   }
 
@@ -247,16 +233,21 @@ struct DielectronMlSingleTrack {
   }
   PROCESS_SWITCH(DielectronMlSingleTrack, processAO2DSingleTrack, "Apply ML selection on skimmed output on single tracks", false);
 
-  /*void processDummy(DielectronsExtra const&)
+  void processDummyAO2D(aod::Collisions const&)
   {
     // dummy
   }
-  PROCESS_SWITCH(DielectronMlSingleTrack, processDummy, "Dummy", false);*/
+  PROCESS_SWITCH(DielectronMlSingleTrack, processDummyAO2D, "Dummy", false);
+
+  void processDummySkimmed(aod::ReducedEvents const&)
+  {
+    // dummy
+  }
+  PROCESS_SWITCH(DielectronMlSingleTrack, processDummySkimmed, "Dummy", false);
 };
 
 struct DielectronMlPair {
   Produces<aod::dqMlSelDielectron> pairSelection;
-  Produces<aod::dielectronMlScorePair> pairScore;
 
   // ML inference
   Configurable<std::vector<double>> binsMMl{"binsMMl", std::vector<double>{dielectron_ml_cuts_pair::vecBinsM}, "Mass bin limits for ML application"};
@@ -270,8 +261,6 @@ struct DielectronMlPair {
   Configurable<std::vector<std::string>> onnxFileNames{"onnxFileNames", std::vector<std::string>{""}, "ONNX file names for each pT bin (if not from CCDB full path)"};
   Configurable<int64_t> timestampCCDB{"timestampCCDB", -1, "timestamp of the ONNX file for ML model used to query in CCDB"};
   Configurable<bool> loadModelsFromCCDB{"loadModelsFromCCDB", false, "Flag to enable or disable the loading of models from CCDB"};
-  // table output
-  Configurable<bool> fillScoreTable{"fillScoreTable", false, "fill table with scores from ML model"};
 
   o2::analysis::MlResponseDielectronPair<float> mlResponse;
   o2::ccdb::CcdbApi ccdbApi;
@@ -300,47 +289,66 @@ struct DielectronMlPair {
         hModelScore.push_back(registry.add<TH1>("hMlScore" + TString(cutsMl->getLabelsCols()[classMl]), "Model score distribution;Model score;counts", HistType::kTH1F, {axisScore}));
         hModelScoreVsM.push_back(registry.add<TH2>("hMlScore" + TString(cutsMl->getLabelsCols()[classMl]) + "VsM", "Model score distribution;Model score;counts", HistType::kTH2F, {axisScore, axisBinsM}));
       }
+      registry.add("hMlSelection", "ML selection status;counts", {HistType::kTH1F, {{2, -0.5, 1.5}}});
+      registry.add("hMlSelectionVsM", "ML selection status;counts", {HistType::kTH2F, {{2, -0.5, 1.5}, axisBinsM}});
     }
   }
 
-  void processPair(DielectronsExtra const& dielectrons, MySkimmedTracks const&)
+  template <typename E, typename T>
+  void doPair(E const& event, T const& tracks1, T const& tracks2)
+  {
+    int pos = 0;
+    std::vector<int> vecSel = {};
+    for (const auto& track1 : tracks1) {
+      if ((!event.isEventSelected() == 1) || (!track1.isBarrelSelected() > 0)) {
+        pairSelection(vecSel, -1);
+        continue;
+      }
+      for (const auto& track2 : tracks2) {
+        if (track2.globalIndex() <= track1.globalIndex()) {
+          continue;
+        }
+        if (!track2.isBarrelSelected() > 0) {
+          continue;
+        }
+        ROOT::Math::PtEtaPhiMVector v1(track1.pt(), track1.eta(), track1.phi(), o2::constants::physics::MassElectron);
+        ROOT::Math::PtEtaPhiMVector v2(track2.pt(), track2.eta(), track2.phi(), o2::constants::physics::MassElectron);
+        ROOT::Math::PtEtaPhiMVector v12 = v1 + v2;
+        auto m = v12.M();
+        std::vector<float> inputFeatures = mlResponse.getInputFeatures(track1, track2);
+        std::vector<float> outputMl = {};
+
+        bool isSelected = mlResponse.isSelectedMl(inputFeatures, m, outputMl);
+        for (int classMl = 0; classMl < nClassesMl; classMl++) {
+          hModelScore[classMl]->Fill(outputMl[classMl]);
+          hModelScoreVsM[classMl]->Fill(outputMl[classMl], m);
+        }
+        registry.fill(HIST("hMlSelection"), isSelected);
+        registry.fill(HIST("hMlSelectionVsM"), isSelected, m);
+        vecSel.push_back(isSelected);
+      }
+      pairSelection(vecSel, pos);
+      pos++;
+      vecSel = {};
+    }
+  }
+
+  void processPair(MyEventsSelected::iterator const& event, MyBarrelTracksSelectedWithCov const& tracks)
   {
     // dummy value for magentic field. ToDo: take it from ccdb!
     float d_bz = 1.;
     mlResponse.setBz(d_bz);
-    for (const auto& dielectron : dielectrons) {
-      const auto& track1 = dielectron.index0_as<MySkimmedTracks>();
-      const auto& track2 = dielectron.index1_as<MySkimmedTracks>();
-      if (track1.sign() == track2.sign()) {
-        continue;
-      }
-      ROOT::Math::PtEtaPhiMVector v1(track1.pt(), track1.eta(), track1.phi(), o2::constants::physics::MassElectron);
-      ROOT::Math::PtEtaPhiMVector v2(track2.pt(), track2.eta(), track2.phi(), o2::constants::physics::MassElectron);
-      ROOT::Math::PtEtaPhiMVector v12 = v1 + v2;
-      auto m = v12.M();
-      std::vector<float> inputFeatures = mlResponse.getInputFeatures(track1, track2);
-      std::vector<float> outputMl = {};
-
-      bool isSelected = mlResponse.isSelectedMl(inputFeatures, m, outputMl);
-      for (int classMl = 0; classMl < nClassesMl; classMl++) {
-        hModelScore[classMl]->Fill(outputMl[classMl]);
-        hModelScoreVsM[classMl]->Fill(outputMl[classMl], m);
-      }
-      pairSelection(isSelected);
-      if (fillScoreTable) {
-        pairScore(outputMl);
-      }
-    }
+    doPair(event, tracks, tracks);
   }
   PROCESS_SWITCH(DielectronMlPair, processPair, "Apply ML selection at pair level", false);
 
-  void processDummyAO2D(MyTracksWithPID const&)
+  void processDummyAO2D(aod::Collisions const&)
   {
     // dummy
   }
   PROCESS_SWITCH(DielectronMlPair, processDummyAO2D, "Dummy", false);
 
-  void processDummySkimmed(MySkimmedTracks const&)
+  void processDummySkimmed(aod::ReducedEvents const&)
   {
     // dummy
   }
