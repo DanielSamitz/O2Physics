@@ -115,7 +115,8 @@ class VarManager : public TObject
     TrackTPCPID = BIT(22),
     TrackMFT = BIT(23),
     ReducedTrackCollInfo = BIT(24), // TODO: remove it once new reduced data tables are produced for dielectron with ReducedTracksBarrelInfo
-    ReducedMuonCollInfo = BIT(25)   // TODO: remove it once new reduced data tables are produced for dielectron with ReducedTracksBarrelInfo
+    ReducedMuonCollInfo = BIT(25),  // TODO: remove it once new reduced data tables are produced for dielectron with ReducedTracksBarrelInfo
+    MlSelTrack = BIT(26)
   };
 
   enum PairCandidateType {
@@ -385,6 +386,7 @@ class VarManager : public TObject
     kIsDalitzLeg,                             // Up to 8 dalitz selections
     kBarrelNAssocsInBunch = kIsDalitzLeg + 8, // number of in bunch collision associations
     kBarrelNAssocsOutOfBunch,                 // number of out of bunch collision associations
+    kIsSelMlTrack,
     kNBarrelTrackVariables,
 
     // Muon track variables
@@ -1726,6 +1728,10 @@ void VarManager::FillTrack(T const& track, float* values)
     values[kTPCnSigmaMu] = track.tpcNSigmaMu();
     values[kTOFnSigmaMu] = track.tofNSigmaMu();
     values[kTOFbeta] = track.beta();
+  }
+
+  if constexpr ((fillMap & MlSelTrack) > 0) {
+    values[kIsSelMlTrack] = track.isSelMlTrack();
   }
 
   // Quantities based on the muon extra table

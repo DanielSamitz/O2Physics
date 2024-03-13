@@ -96,6 +96,8 @@ using MyEventsHashSelectedQvector = soa::Join<aod::ReducedEvents, aod::ReducedEv
 
 using MyBarrelTracks = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelPID>;
 using MyBarrelTracksWithCov = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelCov, aod::ReducedTracksBarrelPID>;
+using MyBarrelTracksWithMlTrack = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelPID, aod::dqMlSelTrack>;
+using MyBarrelTracksWithCovAndMlTrack = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelCov, aod::ReducedTracksBarrelPID, aod::dqMlSelTrack>;
 using MyBarrelTracksSelected = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelPID, aod::BarrelTrackCuts>;
 using MyBarrelTracksSelectedWithPrefilter = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelPID, aod::BarrelTrackCuts, aod::Prefilter>;
 using MyBarrelTracksSelectedWithCov = soa::Join<aod::ReducedTracks, aod::ReducedTracksBarrel, aod::ReducedTracksBarrelCov, aod::ReducedTracksBarrelPID, aod::BarrelTrackCuts>;
@@ -116,6 +118,9 @@ constexpr static uint32_t gkEventFillMapWithCovQvector = VarManager::ObjTypes::R
 constexpr static uint32_t gkTrackFillMap = VarManager::ObjTypes::ReducedTrack | VarManager::ObjTypes::ReducedTrackBarrel | VarManager::ObjTypes::ReducedTrackBarrelPID;
 constexpr static uint32_t gkTrackFillMapWithCov = VarManager::ObjTypes::ReducedTrack | VarManager::ObjTypes::ReducedTrackBarrel | VarManager::ObjTypes::ReducedTrackBarrelCov | VarManager::ObjTypes::ReducedTrackBarrelPID;
 constexpr static uint32_t gkTrackFillMapWithColl = VarManager::ObjTypes::ReducedTrack | VarManager::ObjTypes::ReducedTrackBarrel | VarManager::ObjTypes::ReducedTrackBarrelPID | VarManager::ObjTypes::ReducedTrackCollInfo;
+constexpr static uint32_t gkTrackFillMapWithMlTrack = VarManager::ObjTypes::ReducedTrack | VarManager::ObjTypes::ReducedTrackBarrel | VarManager::ObjTypes::ReducedTrackBarrelPID | VarManager::ObjTypes::MlSelTrack;
+constexpr static uint32_t gkTrackFillMapWithCovAndMlTrack = VarManager::ObjTypes::ReducedTrack | VarManager::ObjTypes::ReducedTrackBarrel | VarManager::ObjTypes::ReducedTrackBarrelCov | VarManager::ObjTypes::ReducedTrackBarrelPID | VarManager::ObjTypes::MlSelTrack;
+
 
 constexpr static uint32_t gkMuonFillMap = VarManager::ObjTypes::ReducedMuon | VarManager::ObjTypes::ReducedMuonExtra;
 constexpr static uint32_t gkMuonFillMapWithCov = VarManager::ObjTypes::ReducedMuon | VarManager::ObjTypes::ReducedMuonExtra | VarManager::ObjTypes::ReducedMuonCov;
@@ -343,6 +348,14 @@ struct AnalysisTrackSelection {
   {
     runTrackSelection<gkEventFillMapWithCov, gkTrackFillMapWithCov>(event, tracks);
   }
+  void processSkimmedWithMl(MyEvents::iterator const& event, MyBarrelTracksWithMlTrack const& tracks)
+  {
+    runTrackSelection<gkEventFillMap, gkTrackFillMapWithMlTrack>(event, tracks);
+  }
+  void processSkimmedWithCovAndMl(MyEventsVtxCov::iterator const& event, MyBarrelTracksWithCovAndMlTrack const& tracks)
+  {
+    runTrackSelection<gkEventFillMapWithCov, gkTrackFillMapWithCovAndMlTrack>(event, tracks);
+  }
   void processDummy(MyEvents&)
   {
     // do nothing
@@ -350,6 +363,8 @@ struct AnalysisTrackSelection {
 
   PROCESS_SWITCH(AnalysisTrackSelection, processSkimmed, "Run barrel track selection on DQ skimmed tracks", false);
   PROCESS_SWITCH(AnalysisTrackSelection, processSkimmedWithCov, "Run barrel track selection on DQ skimmed tracks w/ cov matrix", false);
+  PROCESS_SWITCH(AnalysisTrackSelection, processSkimmedWithMl, "Run barrel track selection on DQ skimmed tracks with ML selection", false);
+  PROCESS_SWITCH(AnalysisTrackSelection, processSkimmedWithCovAndMl, "Run barrel track selection on DQ skimmed tracks w/ cov matrix and ML selection", false);
   PROCESS_SWITCH(AnalysisTrackSelection, processDummy, "Dummy function", false);
 };
 

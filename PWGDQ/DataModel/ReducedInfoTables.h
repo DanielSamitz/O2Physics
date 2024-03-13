@@ -761,6 +761,15 @@ DECLARE_SOA_TABLE(RedDleptDmesAll, "AOD", "RTDILPTDMESALL", //!
                   jpsidmescorr::BdtBkg,
                   jpsidmescorr::BdtPrompt,
                   jpsidmescorr::BdtNonprompt);
+
+namespace dqMlSelection
+{
+DECLARE_SOA_COLUMN(IsSelMlTrack, isSelMlTrack, bool);
+}
+
+DECLARE_SOA_TABLE(dqMlSelTrack, "AOD", "DQMLSELTRACK", //!
+                  dqMlSelection::IsSelMlTrack);
+
 } // namespace o2::aod
 
 #endif // PWGDQ_DATAMODEL_REDUCEDINFOTABLES_H_
