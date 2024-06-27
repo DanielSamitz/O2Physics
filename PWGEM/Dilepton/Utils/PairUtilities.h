@@ -65,7 +65,7 @@ bool isSVFound(TDCAFitter fitter, TCollision const& collision, TTrack const& t1,
 template <typename TDCAFitter, typename TCollision, typename TTrack>
 bool isSVFound(TDCAFitter fitter, TCollision const& collision, TTrack const& t1, TTrack const& t2, float& pca, float& lxy)
 {
-  float cosPA=999.f;
+  float cosPA = 999.f;
   return isSVFound(fitter, collision, t1, t2, pca, lxy, cosPA);
 }
 //_______________________________________________________________________
